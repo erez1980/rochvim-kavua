@@ -305,6 +305,7 @@
         <span class="chip" data-diff="קשה"><span class="dot" style="background:var(--red)"></span>קשה</span>
         <span class="chip" data-diff="אתגרי"><span class="dot" style="background:var(--ink)"></span>אתגרי</span>
         <span class="chip" id="ebikeChip">⚡ מתאים לחשמלי</span>
+        <span class="chip" id="gpxChip">📥 יש GPX להורדה</span>
       </div>
       <div class="sliders">
         <div class="slider">
@@ -792,7 +793,7 @@ const TRACKS = [
 ];
 
 /* ---- מצב ---- */
-const state={q:"",region:"",type:"",cat:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:"",favOnly:false,userLoc:null};
+const state={q:"",region:"",type:"",cat:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:"",favOnly:false,gpxOnly:false,userLoc:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 
 /* ---- מועדפים (localStorage) ---- */
@@ -871,6 +872,7 @@ function filtered(){
     if(state.dir&&t.dir!==state.dir)return false;
     if(state.diffs.size&&!state.diffs.has(t.diff))return false;
     if(state.ebike&&!t.ebike)return false;
+    if(state.gpxOnly&&!hasGPX(t))return false;
     if(t.km>state.km)return false;
     if(t.el>state.el)return false;
     if(state.favOnly&&!isFav(t.name))return false;
@@ -891,12 +893,12 @@ function filtered(){
 
 /* האם יש סינון פעיל כלשהו */
 function anyActive(){
-  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly;
+  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly||state.gpxOnly;
 }
 function activeCount(){
   let n=0;
   if(state.region)n++; if(state.type)n++; if(state.cat)n++; if(state.dir)n++; if(state.sort)n++;
-  n+=state.diffs.size; if(state.ebike)n++; if(state.favOnly)n++;
+  n+=state.diffs.size; if(state.ebike)n++; if(state.favOnly)n++; if(state.gpxOnly)n++;
   if(state.km<120)n++; if(state.el<1500)n++;
   return n;
 }
@@ -957,7 +959,7 @@ function render(){
 /* ניקוי כל הסינונים */
 function clearAll(){
   state.q="";state.region="";state.type="";state.cat="";state.dir="";state.diffs.clear();
-  state.ebike=false;state.km=120;state.el=1500;state.sort="";state.favOnly=false;
+  state.ebike=false;state.km=120;state.el=1500;state.sort="";state.favOnly=false;state.gpxOnly=false;
   $("#q").value="";$("#region").value="";$("#type").value="";$("#cat").value="";$("#dir").value="";$("#sort").value="";
   $("#km").value=120;$("#kmval").textContent=120;$("#el").value=1500;$("#elval").textContent=1500;
   $$(".chip").forEach(c=>c.classList.remove("on"));
@@ -1083,6 +1085,10 @@ const ebc=$("#ebikeChip");ebc.setAttribute("role","button");ebc.setAttribute("ta
 const ebToggle=function(){state.ebike=!state.ebike;ebc.classList.toggle("on",state.ebike);render()};
 ebc.onclick=ebToggle;
 ebc.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ebToggle()}};
+const gpxc=$("#gpxChip");gpxc.setAttribute("role","button");gpxc.setAttribute("tabindex","0");
+const gpxToggle=function(){state.gpxOnly=!state.gpxOnly;gpxc.classList.toggle("on",state.gpxOnly);render()};
+gpxc.onclick=gpxToggle;
+gpxc.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();gpxToggle()}};
 
 /* ---- מצב תצוגה בהיר/כהה ---- */
 (function(){
