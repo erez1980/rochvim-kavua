@@ -1,0 +1,1055 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>רוכבים קבוע — מאגר מסלולי השטח של ישראל</title>
+<meta name="description" content="המאגר הגדול בישראל למסלולי אופני שטח וסינגלים — 134 מסלולים מכל הארץ עם נתונים, דרגות קושי, סינון חכם וקובץ GPX להורדה. מותאם גם לאופני חשמל." />
+<meta name="keywords" content="מסלולי אופניים, סינגלים, אופני שטח, eMTB, אופני חשמל, GPX, רכיבת שטח, ישראל, MTB" />
+<meta name="author" content="ארז ברזאני" />
+<meta name="theme-color" content="#0a7d4d" />
+<link rel="canonical" href="https://rochvim-kavuh.com/" />
+<meta property="og:url" content="https://rochvim-kavuh.com/" />
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:locale" content="he_IL" />
+<meta property="og:title" content="רוכבים קבוע — מאגר מסלולי השטח של ישראל" />
+<meta property="og:description" content="134 מסלולי אופני שטח וסינגלים מכל הארץ, עם סינון חכם וקובץ GPX להורדה. מותאם גם לאופני חשמל." />
+<meta property="og:site_name" content="רוכבים קבוע" />
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="רוכבים קבוע — מאגר מסלולי השטח של ישראל" />
+<meta name="twitter:description" content="134 מסלולי אופני שטח וסינגלים מכל הארץ, עם סינון חכם וקובץ GPX להורדה." />
+<!-- Favicon (אופניים SVG inline) -->
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a7d4d'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white'%3E🚵%3C/text%3E%3C/svg%3E" />
+<!-- Schema.org -->
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebSite","name":"רוכבים קבוע","alternateName":"Rochvim Kavuh","url":"https://rochvim-kavuh.com/","description":"מאגר מסלולי השטח של ישראל לרוכבי אופניים","inLanguage":"he","author":{"@type":"Person","name":"ארז ברזאני"},"publisher":{"@type":"Person","name":"ארז ברזאני"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://rochvim-kavuh.com/?q={search_term_string}"},"query-input":"required name=search_term_string"}}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+  :root{
+    --bg:#fbfbfd; --surface:#ffffff; --ink:#1d1d1f; --ink-soft:#6e6e73;
+    --line:#e8e8ed; --accent:#0a7d4d; --accent-2:#0071e3;
+    --shadow:0 4px 24px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.05);
+    --shadow-lg:0 20px 60px rgba(0,0,0,.14);
+    --green:#2e8b57; --blue:#0071e3; --red:#d63a3a; --black:#1d1d1f;
+    --radius:22px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){ --bg:#000; --surface:#1c1c1e; --ink:#f5f5f7; --ink-soft:#a1a1a6;
+      --line:#2c2c2e; --shadow:0 4px 24px rgba(0,0,0,.5); --shadow-lg:0 20px 60px rgba(0,0,0,.6);}
+  }
+  :root[data-theme="dark"]{ --bg:#000; --surface:#1c1c1e; --ink:#f5f5f7; --ink-soft:#a1a1a6;
+    --line:#2c2c2e; --shadow:0 4px 24px rgba(0,0,0,.5); --shadow-lg:0 20px 60px rgba(0,0,0,.6);}
+  *{box-sizing:border-box;margin:0;padding:0}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+    clip:rect(0,0,0,0);white-space:nowrap;border:0}
+  html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+  body{font-family:'Heebo',-apple-system,system-ui,sans-serif;background:var(--bg);color:var(--ink);
+    line-height:1.5;overflow-x:hidden;-webkit-font-smoothing:antialiased}
+
+  /* nav */
+  .nav{position:sticky;top:0;z-index:50;backdrop-filter:saturate(180%) blur(20px);
+    background:color-mix(in srgb,var(--bg) 80%,transparent);border-bottom:1px solid var(--line);
+    height:52px;display:flex;align-items:center;justify-content:center;gap:18px;padding:0 16px}
+  .nav b{font-weight:700;letter-spacing:.5px}
+  .nav .logo{font-weight:900;font-size:19px;margin-inline-end:auto}
+  .nav .nav-tag{margin-inline-start:auto}
+  .nav .logo span{color:var(--accent)}
+  .theme-btn{background:var(--surface);border:1px solid var(--line);border-radius:50%;
+    width:34px;height:34px;font-size:15px;cursor:pointer;display:grid;place-items:center;
+    transition:.2s;flex:none}
+  .theme-btn:hover{border-color:var(--accent);transform:scale(1.08)}
+  @media(max-width:600px){.nav .nav-tag{display:none}}
+  /* focus visibility (a11y) */
+  a:focus-visible,button:focus-visible,select:focus-visible,input:focus-visible,.chip:focus-visible{
+    outline:2.5px solid var(--accent-2);outline-offset:2px;border-radius:8px}
+
+  /* hero */
+  .hero{min-height:78vh;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:80px 22px 60px;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;inset:0;z-index:-1;
+    background:
+      radial-gradient(120% 80% at 50% -10%, rgba(10,125,77,.18), transparent 60%),
+      radial-gradient(80% 60% at 80% 30%, rgba(0,113,227,.10), transparent 55%);}
+  .hero h1{font-size:clamp(40px,8vw,84px);font-weight:900;letter-spacing:-.02em;line-height:1.02;
+    margin-bottom:18px;opacity:0;transform:translateY(20px);animation:rise .9s .1s forwards cubic-bezier(.16,1,.3,1)}
+  .hero h1 em{font-style:normal;background:linear-gradient(120deg,var(--accent),var(--accent-2));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+  .hero p{font-size:clamp(17px,2.4vw,23px);color:var(--ink-soft);max-width:620px;font-weight:300;
+    opacity:0;transform:translateY(20px);animation:rise .9s .25s forwards cubic-bezier(.16,1,.3,1)}
+  .hero .stat{margin-top:34px;display:flex;gap:34px;flex-wrap:wrap;justify-content:center;
+    opacity:0;animation:rise .9s .4s forwards cubic-bezier(.16,1,.3,1)}
+  .hero .stat div{text-align:center}
+  .hero .stat b{display:block;font-size:30px;font-weight:900;color:var(--accent)}
+  .hero .stat small{color:var(--ink-soft);font-size:13px;font-weight:500}
+  @keyframes rise{to{opacity:1;transform:none}}
+
+  /* layout */
+  .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
+
+  /* filters */
+  .filters{position:sticky;top:52px;z-index:40;background:color-mix(in srgb,var(--bg) 92%,transparent);
+    backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:14px 0}
+  .filters .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .search{flex:1;min-width:200px;display:flex;align-items:center;gap:8px;background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;padding:9px 16px;box-shadow:var(--shadow)}
+  .search input{border:0;background:none;outline:none;flex:1;font-family:inherit;font-size:15px;color:var(--ink)}
+  .search svg{flex:none;color:var(--ink-soft)}
+  select,.chip{font-family:inherit;font-size:14px;border:1px solid var(--line);background:var(--surface);
+    color:var(--ink);border-radius:999px;padding:9px 14px;cursor:pointer;outline:none;box-shadow:var(--shadow);transition:.2s}
+  select:hover,.chip:hover{border-color:var(--accent)}
+  .chip{display:inline-flex;align-items:center;gap:7px;user-select:none}
+  .chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+  .clear-btn{font-family:inherit;font-size:14px;border:1px solid var(--line);background:transparent;
+    color:var(--ink-soft);border-radius:999px;padding:9px 14px;cursor:pointer;transition:.2s;display:none}
+  .clear-btn:hover{border-color:var(--red);color:var(--red)}
+  .clear-btn.show{display:inline-flex}
+  /* כפתור פתיחת סינון */
+  .toggle-filters{display:none;align-items:center;gap:7px;font-family:inherit;font-size:14px;font-weight:600;
+    border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;
+    padding:9px 16px;cursor:pointer;box-shadow:var(--shadow);transition:.2s;flex:none}
+  .toggle-filters:hover{border-color:var(--accent)}
+  .toggle-filters svg{color:var(--ink-soft)}
+  .active-badge{display:none;min-width:18px;height:18px;padding:0 5px;border-radius:999px;
+    background:var(--accent);color:#fff;font-size:11px;font-weight:700;align-items:center;justify-content:center}
+  .active-badge.show{display:inline-flex}
+  .panel{margin-top:12px}
+  .chip .dot{width:9px;height:9px;border-radius:50%;background:#fff}
+  .sliders{display:flex;gap:24px;flex-wrap:wrap;margin-top:12px}
+  .slider{flex:1;min-width:220px}
+  .slider label{font-size:13px;color:var(--ink-soft);font-weight:500;display:flex;justify-content:space-between;margin-bottom:4px}
+  .slider label b{color:var(--accent);font-weight:700}
+  input[type=range]{width:100%;accent-color:var(--accent);height:4px}
+  .count{font-size:14px;color:var(--ink-soft);margin:18px 0 4px;font-weight:500}
+  .count b{color:var(--ink)}
+  .count-row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+  .view-toggle{display:inline-flex;background:var(--surface);border:1px solid var(--line);
+    border-radius:999px;padding:3px;box-shadow:var(--shadow)}
+  .vt-btn{font-family:inherit;font-size:13.5px;font-weight:600;border:0;background:none;color:var(--ink-soft);
+    padding:7px 16px;border-radius:999px;cursor:pointer;transition:.2s}
+  .vt-btn.on{background:var(--accent);color:#fff}
+  .map-main{display:none;height:600px;width:100%;border-radius:var(--radius);overflow:hidden;
+    margin:14px 0 80px;border:1px solid var(--line);box-shadow:var(--shadow);z-index:1}
+  body.map-view .grid{display:none}
+  body.map-view .map-main{display:block}
+  .map-modal{height:200px;width:100%;border-radius:14px;overflow:hidden;margin:16px 0 0;border:1px solid var(--line)}
+  /* סיכות צבועות לפי קושי */
+  .pin{width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
+    border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+  .pin-green{background:var(--green)} .pin-blue{background:var(--blue)}
+  .pin-red{background:var(--red)} .pin-black{background:#1d1d1f}
+  .leaflet-popup-content{font-family:'Heebo',sans-serif;direction:rtl;text-align:right;margin:12px 14px}
+  .leaflet-popup-content b{font-size:15px;display:block;margin-bottom:4px}
+  .leaflet-popup-content .pop-meta{font-size:12px;color:#666;margin-bottom:8px}
+  .leaflet-popup-content button{font-family:inherit;background:var(--accent);color:#fff;border:0;
+    border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+  /* === רספונסיבי: פילטרים מתקפלים בנייד === */
+  @media(max-width:760px){
+    .filters{padding:10px 0}
+    .toggle-filters{display:inline-flex}
+    .panel{display:none;animation:slideDown .25s ease}
+    .panel.open{display:block}
+    .filters .row{gap:8px}
+    .panel select{flex:1;min-width:46%}
+    .sliders{gap:14px;margin-top:10px}
+    .slider{min-width:100%}
+  }
+  @keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+
+  /* grid */
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:22px;padding:14px 0 80px}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;
+    cursor:pointer;box-shadow:var(--shadow);transition:transform .35s cubic-bezier(.16,1,.3,1),box-shadow .35s;
+    display:flex;flex-direction:column;opacity:0;transform:translateY(16px);animation:rise .6s forwards;
+    border-inline-start:4px solid var(--line)}
+  .card.diff-green{border-inline-start-color:var(--green)}
+  .card.diff-blue{border-inline-start-color:var(--blue)}
+  .card.diff-red{border-inline-start-color:var(--red)}
+  .card.diff-black{border-inline-start-color:var(--ink)}
+  .card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg)}
+  .card .top{height:118px;position:relative;display:flex;align-items:flex-end;padding:14px;
+    background:linear-gradient(135deg,#0a7d4d22,#0071e322)}
+  .card .top .region{font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);
+    padding:4px 11px;border-radius:999px;backdrop-filter:blur(4px)}
+  .card .top .terrain-icon{position:absolute;top:50%;right:16px;transform:translateY(-50%);
+    font-size:40px;opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+  .card .top .terrain{position:absolute;inset:0;opacity:.5;
+    background-size:cover;background-position:center;mix-blend-mode:multiply}
+  .card .body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column}
+  .card h3{font-size:19px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em}
+  .card .desc{font-size:14px;color:var(--ink-soft);font-weight:300;flex:1;margin-bottom:14px;
+    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .card .meta{display:flex;gap:14px;font-size:13px;color:var(--ink-soft);flex-wrap:wrap}
+  .card .meta b{color:var(--ink);font-weight:700}
+  .badges{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+  .b-green{color:var(--green);border-color:var(--green)}
+  .b-blue{color:var(--blue);border-color:var(--blue)}
+  .b-red{color:var(--red);border-color:var(--red)}
+  .b-black{color:var(--ink);border-color:var(--ink)}
+  .b-ebike{color:#b8860b;border-color:#b8860b;background:#b8860b14}
+
+  /* modal */
+  .overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
+    display:none;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity .25s}
+  .overlay.show{display:flex;opacity:1}
+  .modal{background:var(--surface);border-radius:26px;max-width:560px;width:100%;max-height:90vh;overflow-y:auto;
+    box-shadow:var(--shadow-lg);transform:scale(.95);transition:transform .3s cubic-bezier(.16,1,.3,1)}
+  .overlay.show .modal{transform:none}
+  .modal .head{padding:26px 28px 18px;border-bottom:1px solid var(--line);position:relative}
+  .modal .close{position:absolute;top:20px;left:20px;width:30px;height:30px;border:0;border-radius:50%;
+    background:var(--line);color:var(--ink);font-size:17px;cursor:pointer;line-height:1}
+  .modal h2{font-size:27px;font-weight:900;letter-spacing:-.02em;padding-left:36px}
+  .modal .sub{color:var(--ink-soft);font-size:14px;margin-top:4px}
+  .modal .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);margin:0}
+  .modal .stats div{background:var(--surface);padding:16px 12px;text-align:center}
+  .modal .stats b{display:block;font-size:22px;font-weight:900;color:var(--accent)}
+  .modal .stats small{color:var(--ink-soft);font-size:12px}
+  .modal .content{padding:22px 28px 28px}
+  .modal .content p{font-size:15px;color:var(--ink-soft);font-weight:300;margin-bottom:18px;line-height:1.6}
+  .modal .kv{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .modal .kv span:first-child{color:var(--ink-soft)}
+  .modal .kv span:last-child{font-weight:600}
+  .actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+  .btn{flex:1;min-width:150px;text-align:center;font-family:inherit;font-size:15px;font-weight:700;
+    padding:14px;border-radius:14px;border:0;cursor:pointer;text-decoration:none;transition:.2s}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-primary:hover{filter:brightness(1.08)}
+  .btn-ghost{background:var(--line);color:var(--ink)}
+  .btn-ghost:hover{filter:brightness(.96)}
+  .empty{text-align:center;padding:80px 20px;color:var(--ink-soft)}
+
+  footer{border-top:1px solid var(--line);padding:36px 22px;text-align:center;color:var(--ink-soft);font-size:13px;font-weight:300}
+  footer a{color:var(--accent);text-decoration:none}
+  .copyright{margin-top:20px;padding-top:18px;border-top:1px solid var(--line);
+    font-size:12.5px;font-weight:400;color:var(--ink-soft);letter-spacing:.2px}
+  .copyright b{color:var(--ink);font-weight:700}
+  @media(max-width:600px){.modal .stats b{font-size:18px}}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="logo">רוכבים קבוע</div>
+  <b class="nav-tag">מאגר מסלולי השטח של ישראל</b>
+  <button id="themeBtn" class="theme-btn" aria-label="החלפת מצב תצוגה בהיר/כהה" title="מצב בהיר/כהה">🌙</button>
+</nav>
+
+<header class="hero">
+  <h1>כל הסינגלים.<br><em>מקום אחד לרוכבים קבוע.</em><span class="sr-only"> — מאגר מסלולי אופני שטח, סינגלים ורכיבת eMTB בישראל</span></h1>
+  <p>מאגר מסלולי אופני השטח של ישראל — סינגלים, קרוס-קאנטרי ומסלולי אנדורו מכל הארץ, עם נתונים מלאים, דרגות קושי, וקובץ GPX להורדה ישירה. מסוננים בדיוק לפי מה שחשוב לרוכב, כולל התאמה לאופני חשמל.</p>
+  <div class="stat">
+    <div><b id="hcount">0</b><small>מסלולים</small></div>
+    <div><b id="hkm">0</b><small>ק״מ מצטבר</small></div>
+    <div><b id="hebike">0</b><small>מתאימים לחשמלי</small></div>
+  </div>
+</header>
+
+<section class="filters">
+  <div class="wrap">
+    <div class="row">
+      <div class="search">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        <input id="q" placeholder="חיפוש מסלול…" aria-label="חיפוש מסלול" />
+      </div>
+      <button id="toggleFilters" class="toggle-filters" aria-expanded="false" aria-controls="panel">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M7 12h10M11 18h2"/></svg>
+        סינון<span id="activeBadge" class="active-badge"></span>
+      </button>
+      <button id="clearBtn" class="clear-btn" aria-label="ניקוי כל הסינונים">✕ נקה</button>
+    </div>
+    <div class="panel" id="panel">
+      <div class="row">
+        <select id="region" aria-label="סינון לפי אזור"><option value="">כל האזורים</option></select>
+        <select id="type" aria-label="סינון לפי סוג מסלול"><option value="">כל הסוגים</option></select>
+        <select id="dir" aria-label="סינון לפי כיווניות"><option value="">כל הכיוונים</option></select>
+        <select id="sort" aria-label="מיון תוצאות">
+          <option value="">מיון: ברירת מחדל</option>
+          <option value="km-asc">אורך — קצר לארוך</option>
+          <option value="km-desc">אורך — ארוך לקצר</option>
+          <option value="el-asc">טיפוס — נמוך לגבוה</option>
+          <option value="el-desc">טיפוס — גבוה לנמוך</option>
+          <option value="name">שם (א׳-ת׳)</option>
+        </select>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span style="font-size:13px;color:var(--ink-soft);font-weight:500">קושי:</span>
+        <span class="chip" data-diff="קל"><span class="dot" style="background:var(--green)"></span>קל</span>
+        <span class="chip" data-diff="בינוני"><span class="dot" style="background:var(--blue)"></span>בינוני</span>
+        <span class="chip" data-diff="קשה"><span class="dot" style="background:var(--red)"></span>קשה</span>
+        <span class="chip" data-diff="אתגרי"><span class="dot" style="background:var(--ink)"></span>אתגרי</span>
+        <span class="chip" id="ebikeChip">⚡ מתאים לחשמלי</span>
+      </div>
+      <div class="sliders">
+        <div class="slider">
+          <label>אורך מקסימלי <b><span id="kmval">120</span> ק״מ</b></label>
+          <input type="range" id="km" min="5" max="120" value="120" step="5" aria-label="אורך מקסימלי בקילומטרים">
+        </div>
+        <div class="slider">
+          <label>טיפוס מקסימלי <b><span id="elval">1500</span> מ׳</b></label>
+          <input type="range" id="el" min="100" max="1500" value="1500" step="50" aria-label="טיפוס מצטבר מקסימלי במטרים">
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<main class="wrap">
+  <div class="count-row">
+    <div class="count">נמצאו <b id="rescount">0</b> מסלולים</div>
+    <div class="view-toggle" role="tablist" aria-label="תצוגת רשימה או מפה">
+      <button id="viewList" class="vt-btn on" role="tab" aria-selected="true">☰ רשימה</button>
+      <button id="viewMap" class="vt-btn" role="tab" aria-selected="false">🗺️ מפה</button>
+    </div>
+  </div>
+  <div class="grid" id="grid"></div>
+  <div id="map" class="map-main" aria-label="מפת כל המסלולים"></div>
+</main>
+
+<div class="overlay" id="overlay">
+  <div class="modal" id="modal"></div>
+</div>
+
+<footer>
+  נבנה כפרויקט אגרגציה. נתוני המסלולים נאספו ממקורות ציבוריים (שביל נט, Outdooractive, קק״ל, MountainBike.co.il ועוד).<br>
+  קובץ ה-GPX נוצר מנקודות המסלול לצורכי ניווט כללי — לדיוק מלא הורידו את הקובץ המקורי מהמקור המקושר. רכבו בזהירות, חבשו קסדה. 🚵
+  <div class="copyright">רוכבים קבוע · נבנה באהבה לקהילת רוכבי השטח · © 2026 <b>ארז ברזאני</b> · כל הזכויות שמורות</div>
+</footer>
+
+<script>
+/* ---- מאגר מסלולי שטח אמיתיים (נאסף ממקורות ציבוריים) ---- */
+const TRACKS = [
+  {name:"סינגל הרצל — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"קל",km:10.5,el:180,dir:"לולאה",ebike:true,
+   desc:"הסינגל הכחול הקלאסי של בן שמן. מעגלי, מוצל ומסומן היטב, עליות וירידות מתונות. מצוין למתחילים ולחשמליים.",
+   lat:31.9047,lon:34.9561,src:"https://www.outdooractive.co.il"},
+  {name:"סינגל ענבה — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"בינוני",km:22,el:270,dir:"לולאה",ebike:true,
+   desc:"הסינגל האדום של בן שמן. ארוך וזורם, רשת שבילים מתוחזקת של קק״ל. נקודת התחלה במצפה מודיעין.",
+   lat:31.9047,lon:34.9561,src:"https://www.kkl.org.il/bike/trips/1965/",
+   gpx:"https://www.kkl.org.il/bike/files/Navigation_files/1965/634d5e36-ef1f-4a3c-84ca-551792c93c45_Large.gpx"},
+  {name:"סינגל חדיד — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"בינוני",km:11,el:200,dir:"חד-כיווני",ebike:true,
+   desc:"הסינגל הירוק בצד הצפוני של בן שמן, מעבר לכביש 443. מעברי סלע מאתגרים בתחילתו ואז זרימה נעימה.",
+   lat:31.9201,lon:34.9620,src:"https://www.eyarok.org.il"},
+  {name:"סינגל עינב — פארק בריטניה",region:"שפלת יהודה",type:"סינגל",diff:"קל",km:10,el:160,dir:"לולאה",ebike:true,
+   desc:"סינגל קצר, זורם ומהיר בצפון פארק בריטניה. מצוין למתחילים שרוצים להתנסות ברכיבת סינגלים סלחנית.",
+   lat:31.6708,lon:34.9270,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=194"},
+  {name:"סינגל חרובית",region:"שפלת יהודה",type:"סינגל",diff:"קשה",km:12.5,el:320,dir:"לולאה",ebike:false,
+   desc:"סינגל אתגרי וטכני — מדרגות סלע וגינות סלע לצד קטעים זורמים. מוצל ברובו. חובה לבעלי שיכוך מלא.",
+   lat:31.7050,lon:34.9100,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=192"},
+  {name:"סינגל עדולם",region:"שפלת יהודה",type:"סינגל",diff:"בינוני",km:21.5,el:420,dir:"לולאה",ebike:true,
+   desc:"הסינגל הקלאסי של השפלה. מאחד קטעי רכיבה מהירים וזורמים עם קטעים אתגריים גדושי אלמנטים טכניים.",
+   lat:31.6500,lon:34.9800,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=190"},
+  {name:"סינגל האלה",region:"שפלת יהודה",type:"סינגל",diff:"קל",km:13,el:200,dir:"חד-כיווני",ebike:true,
+   desc:"שביל נופי וזורם בגבעות נחל האלה, מחבר בין סינגל חרובית לפארק בריטניה. מרחב פתוח ונופים יפים.",
+   lat:31.6900,lon:34.9600,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=193"},
+  {name:"סינגל הגלבוע",region:"גלבוע ועמקים",type:"סינגל",diff:"קשה",km:30.5,el:650,dir:"לולאה",ebike:false,
+   desc:"סינגל מעגלי ארוך ויפה — עולה במתינות בצל היער דרך תצפיות מרהיבות, יורד לעמק חרוד וחוזר.",
+   lat:32.5050,lon:35.4100,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=176"},
+  {name:"סינגל רוחמה–דורות",region:"דרום / נגב צפוני",type:"סינגל",diff:"קל",km:15.5,el:140,dir:"לולאה",ebike:true,
+   desc:"סינגל מעולה מרוחמה דרך הביטרונות עד דורות וחזרה דרך יער רוחמה. נופי לס וזרימה נעימה.",
+   lat:31.4970,lon:34.7100,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=175"},
+  {name:"סינגל הבשור",region:"נגב מערבי",type:"סינגל",diff:"בינוני",km:36,el:300,dir:"נקודה לנקודה",ebike:false,
+   desc:"קרוס-קאנטרי ארוך ומסומן לאורך נחל הבשור — סינגלים, בתרונות וכיף. מומלץ במורד הנחל ממגדל צאלים למגלש רעים.",
+   lat:31.2700,lon:34.4600,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=201"},
+  {name:"דרך הסוכר (קלאסי)",region:"מדבר יהודה",type:"סינגל",diff:"בינוני",km:20,el:250,dir:"נקודה לנקודה",ebike:false,
+   desc:"מגמת ירידה ממעלה אדומים לבקעת ים המלח. שבילים ארוכים ומהירים, קטעים טכניים ונופים עוצרי נשימה.",
+   lat:31.7730,lon:35.3700,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=199"},
+  {name:"דרך הסוכר (ארוך)",region:"מדבר יהודה",type:"סינגל",diff:"אתגרי",km:24.5,el:480,dir:"נקודה לנקודה",ebike:false,
+   desc:"מקידר עולים למונטר ומשם כמעט רק ירידה עד צומת אלמוג. שבילי אורחות גמלים עתיקים, אתגרי ומרהיב.",
+   lat:31.7100,lon:35.3500,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=197"},
+  {name:"סינגל רחמים (ערד)",region:"מדבר יהודה",type:"סינגל",diff:"קשה",km:27,el:520,dir:"לולאה",ebike:false,
+   desc:"סינגל גולש מערד דרך נחל צאלים אל מאגורת רחמים וחזרה. רכיבת סינגלים טהורה, נוף מדברי ואוויר הרים.",
+   lat:31.2580,lon:35.2120,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=198"},
+  {name:"חריץ בחוואר",region:"מדבר יהודה",type:"סינגל",diff:"קל",km:13,el:120,dir:"לולאה",ebike:true,
+   desc:"מסלול יפהפה, זורם ומהיר לכל הרמות. סינגל מתון בערוץ נחל בין קירות חוואר לבנים. מתאים גם בליל ירח מלא.",
+   lat:31.4200,lon:35.3900,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=200"},
+  {name:"נחל פרצים",region:"מדבר יהודה",type:"מעורב",diff:"קל",km:13,el:130,dir:"לולאה",ebike:true,
+   desc:"מסלול מעגלי משפחתי המשלב נוף מדברי עם רכיבה בערוצו המפותל והמרהיב של נחל פרצים.",
+   lat:31.1450,lon:35.3850,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=171"},
+  {name:"סינגל ביריה",region:"גליל עליון",type:"מעורב",diff:"בינוני",km:20.5,el:520,dir:"לולאה",ebike:false,
+   desc:"מסלול יפה, מוצל ומהנה ביער ביריה — פינות חמד, תצפיות נוף ומעיינות. קרוס-קאנטרי קלאסי של הגליל המזרחי.",
+   lat:32.9870,lon:35.4980,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=167"},
+  {name:"רוכב הגולן (שביל הגולן)",region:"רמת הגולן",type:"מעורב",diff:"אתגרי",km:111,el:1450,dir:"נקודה לנקודה",ebike:false,
+   desc:"מסלול עתק על תוואי שביל הגולן מהחרמון למבוא חמה. רכיבה אתגרית ונופים מרהיבים, מחולק לשלושה ימים.",
+   lat:33.1500,lon:35.7800,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=178"},
+  {name:"חצבני, ירדן ובניאס",region:"גליל עליון",type:"שביל יער",diff:"קל",km:17,el:150,dir:"לולאה",ebike:true,
+   desc:"מסע אופניים מענג אל מקורות הירדן. פתרון נפלא לימי קיץ חמים — מים, צל וזרימה קלה.",
+   lat:33.2470,lon:35.6900,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=173"},
+  {name:"דרך הפטרולים (גלבוע)",region:"גלבוע ועמקים",type:"מעורב",diff:"קשה",km:36,el:700,dir:"נקודה לנקודה",ebike:false,
+   desc:"מסלול ארוך ומרהיב היורד אל בקעת הירדן מהצד הפחות מוכר של הגלבוע, מגן נר עד שדי תרומות.",
+   lat:32.4700,lon:35.4500,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=186"},
+  {name:"סובב נחל יששכר",region:"גלבוע ועמקים",type:"מעורב",diff:"בינוני",km:17,el:300,dir:"לולאה",ebike:true,
+   desc:"מסלול מעגלי כיפי עם נוף משגע, מעיינות ועצי שיטה גדולים. מרמת צבאים לאורך שפת המתלול ובמעלה הסוואנה.",
+   lat:32.5300,lon:35.5400,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=185"},
+  {name:"במורד נחל תבור",region:"גלבוע ועמקים",type:"מעורב",diff:"קל",km:15,el:120,dir:"נקודה לנקודה",ebike:true,
+   desc:"מסלול קלאסי במורד נחל תבור שופע המעיינות — מגזית לגשר הישנה, כל הדרך בירידה.",
+   lat:32.6900,lon:35.4000,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=187"},
+  {name:"פארק המעיינות",region:"גלבוע ועמקים",type:"שביל יער",diff:"קל",km:14,el:90,dir:"לולאה",ebike:true,
+   desc:"מסלול מעגלי בעמק חרוד למרגלות הגלבוע, רשת שבילים מישורית ושלל נביעות. מרענן לכל המשפחה.",
+   lat:32.5100,lon:35.4500,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=188"},
+  {name:"סינגל הסוללים",region:"גליל תחתון",type:"סינגל",diff:"קל",km:9,el:130,dir:"לולאה",ebike:true,
+   desc:"סינגל קצר ונעים במכלול יער ציפורי, מקיבוץ הסוללים לשמשית. מתאים לרוכבים עם ידע בסיסי, ניתן להאריך.",
+   lat:32.7480,lon:35.2580,src:"https://www.ourtripapp.com"},
+  {name:"סינגל בית קשת",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:22.6,el:400,dir:"חד-כיווני",ebike:false,
+   desc:"סינגל מורדות מזרחיים של הרי נצרת. רכיבה חד-סטרית נגד כיוון השעון, החוצה את דרך נוף יער בית קשת.",
+   lat:32.7100,lon:35.4200,src:"http://www.mountainbike.co.il"},
+  {name:"סינגל כברי",region:"גליל מערבי",type:"סינגל",diff:"בינוני",km:19,el:550,dir:"לולאה",ebike:false,
+   desc:"מהיפים בארץ — 550 מ׳ טיפוס לאורך 19 ק״מ של סינגל משובח, יער ירוק מוצל ומשולט היטב. תוחזק ע״י קק״ל.",
+   lat:33.0200,lon:35.1500,src:"http://www.mountainbike.co.il"},
+  {name:"סינגל הרי נפתלי",region:"גליל עליון",type:"סינגל",diff:"בינוני",km:23,el:480,dir:"לולאה",ebike:false,
+   desc:"סינגל חדש מעל קריית שמונה ביער הרי נפתלי. רכיבה זורמת עם תצפיות אל אצבע הגליל ועמק החולה.",
+   lat:33.2080,lon:35.5700,src:"http://www.mountainbike.co.il"},
+  {name:"סינגל יער שוויץ",region:"גליל תחתון / כנרת",type:"סינגל",diff:"בינוני",km:16,el:380,dir:"חד-כיווני",ebike:false,
+   desc:"מהסינגלים הפופולריים בישראל — מתגלגל מרכס פוריה לכיוון הכנרת. נוף מרהיב אל הים והגולן.",
+   lat:32.7300,lon:35.5400,src:"https://bikepanel.com"},
+  {name:"סינגלים בכרמל — אונ׳ חיפה",region:"כרמל",type:"סינגל",diff:"בינוני",km:18,el:450,dir:"לולאה",ebike:false,
+   desc:"מסלול זורם, כיפי ומאתגר ביערות הכרמל סביב אוניברסיטת חיפה. לא למתחילים — קטעים טכניים בין האורנים.",
+   lat:32.7620,lon:35.0200,src:"https://mastershaifa.org.il"},
+  {name:"סינגלים בחניון יגור",region:"כרמל",type:"סינגל",diff:"קל",km:14,el:280,dir:"לולאה",ebike:true,
+   desc:"רשת סינגלים בכרמל המזרחי, יציאה מחניון הסטופ-מרקט ליד קיבוץ יגור. מגוון רמות, מוצל וקרוב למרכז.",
+   lat:32.7400,lon:35.0750,src:"https://mastershaifa.org.il"},
+  {name:"סינגלי שדה בוקר",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:25,el:350,dir:"לולאה",ebike:false,
+   desc:"מרחב סינגלים אינסופי בדרום — חלקם מדגמים להפליא. אוויר מדברי, נוף פתוח ושקט מוחלט. כשעה וחצי ממרכז.",
+   lat:30.8700,lon:34.7900,src:"http://www.mountainbike.co.il"},
+  {name:"סינגל חווארי אלמוג",region:"מדבר יהודה",type:"סינגל",diff:"קל",km:12,el:110,dir:"לולאה",ebike:true,
+   desc:"סינגל מתון ומהנה למתחילים בצפון מדבר יהודה, נופי חוואר אופייניים. נגיש ומתאים גם לחשמליים.",
+   lat:31.7400,lon:35.4400,src:"https://bike.co.il"},
+
+  {name:"סינגל בארי — האדום (סובב בארי)",region:"נגב מערבי",type:"סינגל",diff:"בינוני",km:24,el:300,dir:"לולאה",ebike:true,
+   desc:"אחד הסינגלים המפורסמים בארץ. שטח מישורי המאפשר רכיבה מהירה וזורמת, עם אלמנטים טכניים כיפיים ואמבטיות.",
+   lat:31.4250,lon:34.4920,src:"https://www.kkl.org.il/bike/trips/1958/"},
+  {name:"סינגל בארי — הכחול",region:"נגב מערבי",type:"סינגל",diff:"קל",km:14,el:150,dir:"חד-כיווני",ebike:true,
+   desc:"וריאציה קצרה וזורמת של מערכת סינגלי בארי. מתאים גם לרוכבים מתונים ולחשמליים, מסומן בעמודי עץ.",
+   lat:31.4250,lon:34.4920,src:"https://www.kkl.org.il/bike/trips/2000/"},
+  {name:"ממלכת הסינגלים — פארק בריטניה",region:"שפלת יהודה",type:"סינגל",diff:"בינוני",km:25,el:450,dir:"לולאה",ebike:false,
+   desc:"רשת הסינגלים הגדולה של פארק בריטניה — קטעים זורמים ומהירים לצד אלמנטים אתגריים. גן עדן לרוכבי שטח.",
+   lat:31.6750,lon:34.9200,src:"https://www.kkl.org.il/bike/trips/1999/"},
+  {name:"סינגל אלון — יער להב",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:13,el:250,dir:"לולאה",ebike:true,
+   desc:"סינגל מהונדס ומושקע באורך כ-13 ק״מ מול מרכז ג׳ו אלון. מהודק, עם ברמים ודיפונים — זרימה ממכרת בין עצי החורש.",
+   lat:31.3780,lon:34.8720,src:"https://www.kkl.org.il/bike/trips/1957/"},
+  {name:"סינגל רימון — יער להב כרמים",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:14,el:280,dir:"לולאה",ebike:true,
+   desc:"איזון מושלם בין טיפוסים קצרים וירידות זורמות לוואדי, תצפית לעתיקות חורבת רימון. ניתן לחבר לסינגל אלון.",
+   lat:31.3650,lon:34.8800,src:"https://mtb-israel.co.il"},
+  {name:"סינגל יער שגב (משגב)",region:"גליל תחתון",type:"סינגל",diff:"אתגרי",km:18,el:600,dir:"לולאה",ebike:false,
+   desc:"כוכב שונה בגלקסיה של קק״ל — קווי גובה צפופים, הרבה סלעים והרבה זיעה. אגרסיבי ותלול, לרוכבים מנוסים.",
+   lat:32.8650,lon:35.2400,src:"https://www.kkl.org.il/bike/trips/2122/"},
+  {name:"שבילי אנדורו יער שגב",region:"גליל תחתון",type:"סינגל",diff:"קשה",km:12,el:480,dir:"חד-כיווני",ebike:false,
+   desc:"מסלולי אנדורו ייעודיים ביער שגב — שיפועים, אקשן ואדרנלין. דורש מיומנות גבוהה וציוד מגן.",
+   lat:32.8650,lon:35.2400,src:"https://www.kkl.org.il/bike/trips/2974/"},
+  {name:"סינגל יער חניתה",region:"גליל מערבי",type:"סינגל",diff:"בינוני",km:22,el:550,dir:"לולאה",ebike:false,
+   desc:"מסלול ארוך וזורם בלב יער אורנים ואלונים, עם ירידות מטריפות וקטעים עתירי אדרנלין. תצפיות אל מישור החוף הצפוני.",
+   lat:33.0050,lon:35.1100,src:"https://www.kkl.org.il/bike/trips/2755/"},
+  {name:"סינגל מצובה",region:"גליל מערבי",type:"סינגל",diff:"בינוני",km:16,el:400,dir:"לולאה",ebike:false,
+   desc:"סינגל יפה בגליל המערבי סמוך לקיבוץ מצובה. ניתן לחבר לסינגל חניתה ליום רכיבה ארוך בין החורש לתצפיות.",
+   lat:33.0200,lon:35.1700,src:"https://www.kkl.org.il/bike/trips/2754/"},
+  {name:"סינגל יחיעם",region:"גליל מערבי",type:"סינגל",diff:"בינוני",km:17,el:420,dir:"לולאה",ebike:false,
+   desc:"סינגל בצל מבצר יחיעם ההיסטורי. טיפוסים מתונים וארוכים, ירידות מהנות וחציית ערוץ נחל באר. נוף גלילי קלאסי.",
+   lat:33.0080,lon:35.2150,src:"https://www.kkl.org.il/bike/trips/1970/"},
+  {name:"סינגל יער אחיהוד",region:"גליל מערבי",type:"סינגל",diff:"קל",km:13,el:230,dir:"לולאה",ebike:true,
+   desc:"סינגל זורם ונעים ביער אחיהוד, מתאים לקשת רחבה של רוכבים. מוצל ברובו וקרוב לצירי הגישה הראשיים.",
+   lat:32.9100,lon:35.1700,src:"https://www.kkl.org.il/bike/trips/2353/"},
+  {name:"סינגל יער קריית אתא",region:"חיפה והקריות",type:"סינגל",diff:"קל",km:15,el:280,dir:"לולאה",ebike:true,
+   desc:"חלק מקומפלקס סינגלי יערות ציפורי. עליות כמעט בלתי מורגשות וירידות מטריפות, הצצות לנוף הכרמל ומפרץ חיפה.",
+   lat:32.8100,lon:35.1100,src:"https://www.kkl.org.il/bike/trips/2812/"},
+  {name:"סינגל יער שווייץ (קק״ל)",region:"גליל תחתון / כנרת",type:"סינגל",diff:"בינוני",km:17,el:400,dir:"חד-כיווני",ebike:false,
+   desc:"הסינגל הרשמי של יער שווייץ, מתגלגל מרכס פוריה אל הכנרת. נוף מרהיב אל הים והגולן, מסלולי אנדורו בקרבת מקום.",
+   lat:32.7300,lon:35.5400,src:"https://www.kkl.org.il/bike/trips/2161/"},
+  {name:"סינגל יער טורען",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:18.5,el:430,dir:"חד-כיווני",ebike:false,
+   desc:"סינגל משגע על רכס טורען בין צמחיית חורש ירוקה, נבנה בחוכמה לעקיפת שיפועים חדים. תצפית אל בקעת בית נטופה. גם גרסה מקוצרת 13.5 ק״מ.",
+   lat:32.7800,lon:35.3500,src:"https://www.kkl.org.il/bike/trips/2971/"},
+  {name:"סינגל יער לביא",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:20,el:380,dir:"לולאה",ebike:false,
+   desc:"סינגל ביער לביא בגליל התחתון. שילוב נעים של חורש, דרכי יער וקטעים טכניים. מסלול מהנה לרוכבים עם ניסיון בסיסי.",
+   lat:32.7850,lon:35.4400,src:"https://www.kkl.org.il/bike/trips/2276/"},
+  {name:"סינגל יער ביריה ומצוקי דלתון",region:"גליל עליון",type:"סינגל",diff:"בינוני",km:21,el:500,dir:"לולאה",ebike:false,
+   desc:"סינגל מוצל ועשיר ביער ביריה עם תצפיות אל מצוקי דלתון. פינות חמד, מעיינות ונוף גלילי עוצר נשימה.",
+   lat:32.9870,lon:35.4980,src:"https://www.kkl.org.il/bike/trips/1963/"},
+  {name:"סינגל יער צה״ל — כרמיאל",region:"גליל מערבי",type:"סינגל",diff:"קל",km:11,el:200,dir:"לולאה",ebike:true,
+   desc:"סינגל קהילתי בכרמיאל לצד פאמפטרק. מתאים למשפחות ולמתחילים, נגיש ומתוחזק. כניסה טובה לעולם הסינגלים.",
+   lat:32.9150,lon:35.3050,src:"https://www.kkl.org.il/bike/trips/idf_forest/"},
+  {name:"סינגל יער גבעת המורה",region:"גלבוע ועמקים",type:"סינגל",diff:"קל",km:14,el:250,dir:"לולאה",ebike:true,
+   desc:"סינגל מעל עפולה על גבעת המורה. עליות מתונות, ירידות זורמות ותצפית אל עמק יזרעאל והגלבוע.",
+   lat:32.6300,lon:35.3400,src:"https://www.kkl.org.il/bike/trips/2131/"},
+  {name:"סינגל רום הגלבוע",region:"גלבוע ועמקים",type:"סינגל",diff:"בינוני",km:19,el:520,dir:"לולאה",ebike:false,
+   desc:"סינגל ברום הגלבוע עם תצפיות מרהיבות אל עמק חרוד ובקעת בית שאן. טיפוסים מתגמלים וזרימה בין הכלניות בעונה.",
+   lat:32.4950,lon:35.4200,src:"https://www.kkl.org.il/bike/trips/2460/"},
+  {name:"סינגל מרום גולן — בשבילם",region:"רמת הגולן",type:"סינגל",diff:"בינוני",km:20,el:350,dir:"לולאה",ebike:true,
+   desc:"סינגל בצפון הגולן סמוך למרום גולן, נופים פתוחים של רמה געשית. מסומן ומתוחזק, אוויר הרים מרענן.",
+   lat:33.1300,lon:35.7700,src:"https://www.kkl.org.il/bike/trips/2620/"},
+  {name:"שביל אופניים קצרין",region:"רמת הגולן",type:"סינגל",diff:"קל",km:15,el:230,dir:"לולאה",ebike:true,
+   desc:"סינגל חדש של קק״ל סובב קצרין. נוף בזלת ושדות גולן, רכיבה זורמת המתאימה גם למשפחות ולחשמליים.",
+   lat:32.9920,lon:35.6900,src:"https://www.kkl.org.il/bike/trips/2011/"},
+  {name:"שביל אופניים פארק הירדן",region:"גליל / כנרת",type:"שביל יער",diff:"קל",km:16,el:120,dir:"לולאה",ebike:true,
+   desc:"שביל נוח לאורך הירדן ההררי, צל, מים ונופים. אידיאלי למשפחות, לחשמליים ולימי קיץ חמים.",
+   lat:32.9100,lon:35.6300,src:"https://www.kkl.org.il/bike/trips/1966/"},
+  {name:"סינגל נחל לימונים (הבעש״ט)",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:17,el:380,dir:"לולאה",ebike:false,
+   desc:"סינגל יפה בנחל לימונים עם תוספת חדשה. חורש ים-תיכוני, קטעים טכניים זורמים ונופי גליל.",
+   lat:32.8000,lon:35.4000,src:"https://www.kkl.org.il/bike/trips/2994/"},
+  {name:"סינגלים בפארק קנדה (איילון)",region:"מרכז / שפלה",type:"סינגל",diff:"בינוני",km:24,el:320,dir:"לולאה",ebike:true,
+   desc:"רשת סינגלים בפארק קנדה ועמק איילון — כולל סינגל הגורל ובית הקשתות. נגיש ממרכז הארץ, מגוון רמות.",
+   lat:31.8350,lon:34.9800,src:"https://www.kkl.org.il/bike/trips/2005/"},
+  {name:"שביל האופניים השופט–גחר",region:"רמות מנשה",type:"סינגל",diff:"בינוני",km:18,el:340,dir:"לולאה",ebike:false,
+   desc:"סינגל מסודר בנחל השופט ורמות מנשה, חצי מוצל ומסודר עם קטעים טכניים. מסלול ותיק ואהוב של הצפון.",
+   lat:32.6000,lon:35.0900,src:"https://www.kkl.org.il/bike/trips/1998/"},
+  {name:"סינגל יער חוף הכרמל",region:"כרמל",type:"סינגל",diff:"קל",km:14,el:220,dir:"לולאה",ebike:true,
+   desc:"סינגל נעים בחורש חוף הכרמל עם נוף לים. רכיבה זורמת המתאימה לרוכבים מתונים ולחשמליים.",
+   lat:32.6500,lon:34.9500,src:"https://www.kkl.org.il/bike/trips/2907/"},
+  {name:"סינגלי יער חגית ובת שלמה",region:"כרמל / רמות מנשה",type:"סינגל",diff:"בינוני",km:19,el:400,dir:"לולאה",ebike:false,
+   desc:"מערכת סינגלים בין יער חגית לבת שלמה. חורש, כרמים ונופי מנשה, קטעים זורמים לצד טכניים.",
+   lat:32.5800,lon:35.0400,src:"https://www.kkl.org.il/bike/trips/2114/"},
+  {name:"שבילי אופניים יער הקדושים",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:18,el:550,dir:"לולאה",ebike:false,
+   desc:"סינגלים הרריים ביער הקדושים שבהרי ירושלים. טיפוסים מתגמלים, נופי טרסות וחורש, אוויר הרים נקי.",
+   lat:31.7800,lon:35.0400,src:"https://www.kkl.org.il/bike/trips/2152/"},
+  {name:"סינגל עין ראפה",region:"ירושלים והרים",type:"סינגל",diff:"קשה",km:15,el:600,dir:"לולאה",ebike:false,
+   desc:"סינגל טכני ותלול בהרי ירושלים סמוך לעין ראפה. שיפועים תובעניים ונופי הרים — לרוכבים מנוסים בלבד.",
+   lat:31.7900,lon:35.0900,src:"https://www.kkl.org.il/bike/trips/2082/"},
+  {name:"סינגל עין קובי",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:16,el:480,dir:"לולאה",ebike:false,
+   desc:"סינגל בהרי ירושלים סמוך לעין קובי. חורש, מעיינות וטיפוסים, מסלול נופי ומאתגר במידה.",
+   lat:31.7100,lon:35.0700,src:"https://www.kkl.org.il/bike/trips/8793/"},
+  {name:"סינגל זכריה",region:"שפלת יהודה",type:"סינגל",diff:"בינוני",km:18,el:380,dir:"לולאה",ebike:false,
+   desc:"סינגל בשפלה סמוך לזכריה, חלק ממערכת השפלה הגדולה. קטעים זורמים ואלמנטים טכניים, חיבור לסינגלים שכנים.",
+   lat:31.7050,lon:34.9450,src:"https://www.kkl.org.il/bike/trips/1968/"},
+  {name:"שביל אופניים עדולם",region:"שפלת יהודה",type:"שביל יער",diff:"קל",km:16,el:240,dir:"לולאה",ebike:true,
+   desc:"שביל עממי בפארק עדולם בין כרמים ושרידי יישובים עתיקים. נעים, נגיש ומתאים למשפחות ולחשמליים.",
+   lat:31.6500,lon:34.9900,src:"https://www.kkl.org.il/bike/trips/2004/"},
+  {name:"סינגל אסף — כיסופים",region:"נגב מערבי",type:"סינגל",diff:"קל",km:18,el:160,dir:"לולאה",ebike:true,
+   desc:"סינגל זורם ומישורי בנגב המערבי סמוך לכיסופים. רכיבה מהירה וכיפית, מתאים גם לחשמלי ולרוכבים מתונים.",
+   lat:31.3400,lon:34.4000,src:"https://www.kkl.org.il/bike/trips/3004/"},
+  {name:"סינגל סובב יער מיתר",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:20,el:320,dir:"לולאה",ebike:true,
+   desc:"סינגל סובב יער מיתר בשולי המדבר. נוף ספר-המדבר, רכיבה זורמת ומסומנת, חיבור לגוש להב-כרמים.",
+   lat:31.3200,lon:34.9300,src:"https://www.kkl.org.il/bike/trips/2951/"},
+  {name:"סינגל פארק שרשרת — בתרונות גרר",region:"נגב מערבי",type:"סינגל",diff:"קל",km:16,el:180,dir:"לולאה",ebike:true,
+   desc:"סינגל בבתרונות הלס של נחל גרר. נוף ייחודי של בתרונות, זרימה נעימה ורכיבה מהנה לכל הרמות.",
+   lat:31.4000,lon:34.6000,src:"https://www.kkl.org.il/bike/trips/2796/"},
+  {name:"סינגל ניר משה",region:"נגב מערבי",type:"סינגל",diff:"קל",km:14,el:130,dir:"לולאה",ebike:true,
+   desc:"סינגל קצר ומיוחד בלב הדרום האדום, עובר בין יער, שדות חקלאיים ובתרונות. קל וטכני-נמוך, מתאים למתחילים.",
+   lat:31.3550,lon:34.5800,src:"https://www.kkl.org.il/bike/trips/2016/"},
+  {name:"סינגלים בפארק תמנע",region:"ערבה / אילת",type:"סינגל",diff:"בינוני",km:22,el:280,dir:"לולאה",ebike:false,
+   desc:"רכיבת מדבר ייחודית בפארק תמנע בין סלעי חול אדומים ונופים גיאולוגיים מרהיבים. חוויית רכיבה אחרת לגמרי.",
+   lat:29.7600,lon:34.9500,src:"https://www.kkl.org.il/bike/trips/2576/"},
+  {name:"סינגל יער קהילתי שוהם",region:"מרכז / שפלה",type:"סינגל",diff:"קל",km:12,el:200,dir:"לולאה",ebike:true,
+   desc:"סינגל קהילתי ביער שוהם, נגיש ומתוחזק. מתאים למשפחות, למתחילים ולחשמליים, חיבור לסינגלי בן שמן.",
+   lat:31.9950,lon:34.9500,src:"https://www.kkl.org.il/bike/trips/2126/"},
+  {name:"סינגל סובב הר גילון",region:"גליל מערבי",type:"סינגל",diff:"בינוני",km:17,el:420,dir:"לולאה",ebike:false,
+   desc:"סינגל סובב הר גילון בגליל המערבי. חורש, תצפיות ונוף גלילי, קטעים טכניים זורמים ומהנים.",
+   lat:32.9000,lon:35.2600,src:"https://www.kkl.org.il/bike/trips/2188/"},
+  {name:"שביל הרכסים (IMBA)",region:"כרמל / רמות מנשה",type:"סינגל",diff:"בינוני",km:23,el:480,dir:"לולאה",ebike:false,
+   desc:"סינגל בתקן IMBA הבינלאומי לאורך הרכסים. תכנון מקצועי, זרימה מצוינת ונופי כרמל ומנשה.",
+   lat:32.5900,lon:35.0700,src:"https://www.kkl.org.il/bike/trips/2013/"},
+  {name:"מסלולי אנדורו יער שוויץ",region:"גליל תחתון / כנרת",type:"סינגל",diff:"קשה",km:14,el:520,dir:"חד-כיווני",ebike:false,
+   desc:"מסלולי אנדורו תלולים ומאתגרים במורדות יער שוויץ אל הכנרת. שיפועים, אקשן וירידות מהירות. ציוד מגן חובה.",
+   lat:32.7250,lon:35.5300,src:"https://www.kkl.org.il/bike/trips/216170/"},
+
+  {name:"שביל ישראל לאופניים — מצפה רמון לחאן בארות",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:40,el:450,dir:"נקודה לנקודה",ebike:false,
+   desc:"גולש מגן הפסלים שבמצפה רמון אל קרקעית המכתש דרך מעלה נוח, סינגל נחל חווה וסינגל מחמל. נופי מכתש עוצרי נשימה.",
+   lat:30.6100,lon:34.8000,src:"https://ibt.org.il"},
+  {name:"סינגלי מצפה רמון (מרחב השראה)",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:55,el:600,dir:"לולאה",ebike:false,
+   desc:"מערכת חדשה של 55 ק״מ סינגלים בתקן בינלאומי סביב מצפה רמון — מבור חמת, הגמל, הדורבן והשועל. רכיבה לכל רמה.",
+   lat:30.6090,lon:34.8010,src:"https://mitzpe-ramon.muni.il"},
+  {name:"סינגל נחל חווה ופארק הפיסול",region:"נגב / מכתשים",type:"סינגל",diff:"קל",km:14,el:200,dir:"לולאה",ebike:true,
+   desc:"שביל על שפת המכתש בין פסלי הפיסול הסביבתי וסינגל נחל חווה. נוח, נופי ומתאים למשפחות ולחשמליים.",
+   lat:30.6130,lon:34.8050,src:"https://mitzpe-ramon.co.il"},
+  {name:"סינגל עבדת–שדה בוקר",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:39,el:400,dir:"לולאה",ebike:false,
+   desc:"מסלול מעגלי מדברי בין עבדת לשדה בוקר — חאן שיירות, נחל חווארים ורכס חלוקים. סינגל ברור ומסומן, נופי מדבר קסומים.",
+   lat:30.8550,lon:34.7820,src:"https://runpanel.co.il/ovdat/"},
+  {name:"סינגל בור חמת",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:40,el:450,dir:"לולאה",ebike:true,
+   desc:"סינגל מדברי מזרחית למצפה רמון — בור חמת, הגמל, הדורבן והשועל. זורם ומהנה, מתאים גם לחשמליים בעלי ניסיון.",
+   lat:30.6200,lon:34.8300,src:"https://www.ganorbikes.co.il"},
+  {name:"סינגל שביל ישראל — ערד למצדה",region:"מדבר יהודה",type:"סינגל",diff:"קשה",km:32,el:700,dir:"נקודה לנקודה",ebike:false,
+   desc:"מקטע שביל ישראל לאופניים מערד אל מצדה. רכיבת מדבר אתגרית בנופי מצוקים, ירידות תלולות ותצפיות לים המלח.",
+   lat:31.2580,lon:35.2120,src:"https://sites.google.com/view/mtb-israel"},
+  {name:"סינגל דימונה",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:22,el:300,dir:"לולאה",ebike:true,
+   desc:"סינגל מעגלי חדש סביב דימונה, נופי מדבר וזרימה נעימה. מסלול מתפתח ומתרחב, מתאים גם לחשמליים.",
+   lat:31.0700,lon:35.0300,src:"https://sites.google.com/view/mtb-israel"},
+  {name:"סינגל חורשן (E-MTB)",region:"גליל תחתון",type:"מעורב",diff:"קשה",km:42,el:720,dir:"לולאה",ebike:true,
+   desc:"מסלול ארוך המשלב כחצי סינגלים וכחצי דרכי עפר, טיפוס מצטבר מעל 700 מ׳. תוכנן במיוחד לאופני חשמל, עם מעיין לרחצה.",
+   lat:32.7400,lon:35.3800,src:"https://idoeliav.com"},
+  {name:"סינגל יטבתה–תמנע",region:"ערבה / אילת",type:"סינגל",diff:"בינוני",km:25,el:250,dir:"נקודה לנקודה",ebike:false,
+   desc:"סינגל מדברי חדש בערבה הדרומית בין יטבתה לסמר ופארק תמנע. נופי מדבר אדומים ייחודיים, רכיבה בשטח פתוח ושקט.",
+   lat:29.8800,lon:35.0400,src:"https://sites.google.com/view/mtb-israel"},
+
+  {name:"סינגל נחל בוסתן",region:"כרמל",type:"סינגל",diff:"בינוני",km:13,el:500,dir:"לולאה",ebike:false,
+   desc:"החדש בטרילוגיית סינגלי הכרמל (וורן פרייר + קק״ל). עלייה סלולה וחלקה, וירידה מהירה זורמת וארוכה עם ברמים גדולים — כיף צרוף.",
+   lat:32.6950,lon:34.9850,src:"https://www.kkl.org.il/bike/trips/281236/",
+   gpx:"https://www.kkl.org.il/bike/files/Navigation_files/281236/NachalBustan.gpx"},
+  {name:"סינגל אלון הגליל",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:20,el:400,dir:"לולאה",ebike:false,
+   desc:"לב רשת הסינגלים של יערות נחל ציפורי (כ-110 ק״מ). מתגלגל בנוף גלילי, פריחה מרהיבה בחורף-אביב. שתי גרסאות אורך.",
+   lat:32.7900,lon:35.2250,src:"https://www.kkl.org.il/bike/trips/2006/"},
+  {name:"סינגל ריש לקיש",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:24,el:400,dir:"לולאה",ebike:true,
+   desc:"סינגל זורם ונוח המקיף את יער ציפורי, חלק ממערכת ציפורי הענקית. נבנה להנגיש את עומק השטח לכלל הרוכבים. ניתן לקצר.",
+   lat:32.7550,lon:35.2700,src:"https://www.kkl.org.il/bike/trips/1992/"},
+  {name:"סינגל הושעיה",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:14,el:350,dir:"לולאה",ebike:false,
+   desc:"חלק ממערכת ציפורי סמוך לאלון הגליל. שלוש עליות משמעותיות שאחריהן ירידות מהנות, מסומן בצהוב של קק״ל.",
+   lat:32.7600,lon:35.2600,src:"https://www.kkl.org.il/bike/trips/1992/"},
+  {name:"שביל אופניים שמשית",region:"גליל תחתון",type:"סינגל",diff:"קל",km:16,el:280,dir:"לולאה",ebike:true,
+   desc:"סינגל זורם במרחב יערות ציפורי סמוך לשמשית. נקודת מים נוחה, פריחה ופרות בשטח. מתאים גם לחשמליים.",
+   lat:32.7450,lon:35.2550,src:"https://www.kkl.org.il/bike/trips/2009/"},
+  {name:"שביל אופניים תמרת",region:"גליל תחתון",type:"סינגל",diff:"קל",km:13,el:230,dir:"לולאה",ebike:true,
+   desc:"סינגל נעים ביער ציפורי סמוך לתמרת, מתחבר לרשת ציפורי הגדולה. מתאים למשפחות ולרוכבים מתונים.",
+   lat:32.7150,lon:35.2200,src:"https://www.kkl.org.il/bike/trips/2010/"},
+  {name:"שביל אופניים גבעת אלה",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:15,el:320,dir:"לולאה",ebike:false,
+   desc:"סינגל ביער ציפורי על גבעת אלה. חלק מרשת ציפורי, קטעים זורמים ונופי גליל. מתחבר לסינגלים השכנים.",
+   lat:32.7300,lon:35.2400,src:"https://www.kkl.org.il/bike/trips/2008/"},
+  {name:"שביל אופניים הסוללים",region:"גליל תחתון",type:"סינגל",diff:"קל",km:14,el:250,dir:"לולאה",ebike:true,
+   desc:"הגרסה הרשמית של קק״ל לסינגל הסוללים ביער ציפורי. נקודת התחלה נוחה, חיבור לאלון הגליל וריש לקיש.",
+   lat:32.7480,lon:35.2580,src:"https://www.kkl.org.il/bike/trips/2007/"},
+  {name:"שביל אופניים אלון הגליל (קהילתי)",region:"גליל תחתון",type:"סינגל",diff:"קל",km:12,el:200,dir:"לולאה",ebike:true,
+   desc:"גרסת מבואת אלון הגליל — כניסה נוחה לרשת ציפורי, חניה ושילוט. מתאים למתחילים ולחשמליים.",
+   lat:32.7900,lon:35.2250,src:"https://www.kkl.org.il/bike/trips/2006/"},
+  {name:"סינגל פלוגות",region:"דרום / נגב צפוני",type:"סינגל",diff:"בינוני",km:18,el:280,dir:"לולאה",ebike:true,
+   desc:"סינגל מקסים בדרום הקרוב המשלב היסטוריה (משלט פלוגות) עם זרימה מעולה. רכיבה משובחת בכל עונות השנה.",
+   lat:31.6100,lon:34.7100,src:"https://www.kkl.org.il/bike/trips/2550/"},
+  {name:"שביל אופניים יער גברעם",region:"דרום / נגב צפוני",type:"סינגל",diff:"קל",km:15,el:180,dir:"לולאה",ebike:true,
+   desc:"סינגל מחודש של קק״ל ביער גברעם, מצוין לרכיבות חורף. זורם, נופי ומתאים למשפחות ולחשמליים.",
+   lat:31.5900,lon:34.6100,src:"https://www.kkl.org.il/bike/trips/1997/"},
+  {name:"שביל אופניים יער קהילתי שוקדה",region:"נגב מערבי",type:"סינגל",diff:"קל",km:18,el:160,dir:"לולאה",ebike:true,
+   desc:"סינגל כחול ביער שוקדה בלב הדרום האדום, מתחבר לסינגל בארי. כלניות פורחות בחורף, שטח מישורי וזורם.",
+   lat:31.3000,lon:34.4500,src:"https://www.kkl.org.il/bike/trips/1991/"},
+  {name:"שביל אופניים ניר משה (סובב)",region:"נגב מערבי",type:"סינגל",diff:"קל",km:14,el:130,dir:"לולאה",ebike:true,
+   desc:"סינגל קצר ומיוחד בין יער, שדות ובתרונות בדרום האדום. קל וטכני-נמוך, מצוין לרוכבים מתחילים ולחשמליים.",
+   lat:31.3550,lon:34.5800,src:"https://www.kkl.org.il/bike/trips/2016/"},
+  {name:"שביל אופניים נחל שמריה — סובב אופקים",region:"נגב מערבי",type:"שביל יער",diff:"קל",km:20,el:120,dir:"לולאה",ebike:true,
+   desc:"שביל סובב אופקים לאורך נחל שמריה. מישורי ונגיש, מתאים לכל המשפחה ולחשמלי, רכיבה רגועה בנוף נגב.",
+   lat:31.3170,lon:34.6200,src:"https://www.kkl.org.il/bike/trips/2136/"},
+  {name:"סינגל חזון",region:"גליל עליון",type:"סינגל",diff:"בינוני",km:17,el:420,dir:"לולאה",ebike:false,
+   desc:"סינגל בגליל סמוך לחזון. חורש, טיפוסים ונופי הרים, קטעים זורמים ומהנים. מסומן ומתוחזק על ידי קק״ל.",
+   lat:32.9300,lon:35.4400,src:"https://www.kkl.org.il/bike/trips/19613/"},
+  {name:"סינגל המוביל (חנתון)",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:21,el:400,dir:"לולאה",ebike:false,
+   desc:"סינגל חנתון/המוביל בנוף קסום של יער קק״ל ופריחות חורפיות. סיבוב מלא מאלון הגליל וחזרה.",
+   lat:32.8000,lon:35.2100,src:"https://www.kkl.org.il/bike/trips/hamovil/"},
+  {name:"סינגל גבעת חציר",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:16,el:280,dir:"לולאה",ebike:true,
+   desc:"סינגל בגבעת חציר באזור הנגב הצפוני. נוף ספר-מדבר, רכיבה זורמת ומסומנת. מתאים גם לחשמליים.",
+   lat:31.3400,lon:34.9000,src:"https://www.kkl.org.il/bike/trips/givathatzir/"},
+  {name:"סינגל כרמים",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:19,el:300,dir:"לולאה",ebike:true,
+   desc:"סינגל בגוש יערות להב-כרמים בשולי המדבר. שטח פתוח, חורש ים-תיכוני וקטעים טכניים. מתחבר לאלון ורימון.",
+   lat:31.3700,lon:34.8600,src:"https://www.kkl.org.il/bike/trips/krammim/"},
+  {name:"סינגל רימון — להב (כרמים)",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:13,el:250,dir:"לולאה",ebike:true,
+   desc:"סינגל מהונדס בגוש להב עם תצפית לחורבת רימון. קטעי טיפוס קצרים וירידות זורמות, ניתן לחבר לסינגל אלון.",
+   lat:31.3650,lon:34.8800,src:"https://www.kkl.org.il/bike/trips/2356/"},
+  {name:"סינגל יער הבעש״ט / נחל לימונים",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:18,el:400,dir:"לולאה",ebike:false,
+   desc:"סינגל יפה בנחל לימונים ויער הבעש״ט עם תוספת חדשה. חורש ים-תיכוני וקטעים טכניים זורמים בנוף גלילי.",
+   lat:32.8050,lon:35.4050,src:"https://www.kkl.org.il/bike/trips/2994/"},
+  {name:"סינגל כפר החורש — יפיע",region:"גליל תחתון",type:"סינגל",diff:"בינוני",km:16,el:380,dir:"לולאה",ebike:false,
+   desc:"סינגל בין כפר החורש ליפיע במורדות הרי נצרת. חורש, טיפוסים ותצפיות אל עמק יזרעאל.",
+   lat:32.7000,lon:35.2700,src:"https://www.kkl.org.il/bike/trips/2177/"},
+  {name:"סינגל כפר חנניה — ענבר",region:"גליל עליון",type:"סינגל",diff:"בינוני",km:17,el:420,dir:"לולאה",ebike:false,
+   desc:"סינגל בגליל סמוך לכפר חנניה וענבר. נופי הרים, חורש וקטעים טכניים זורמים. מסומן ומתוחזק.",
+   lat:32.9200,lon:35.4200,src:"https://www.kkl.org.il/bike/trips/2848/"},
+  {name:"סינגל משואה",region:"גלבוע ועמקים",type:"סינגל",diff:"בינוני",km:18,el:350,dir:"לולאה",ebike:false,
+   desc:"סינגל סמוך למשואה בבקעה. רכיבה זורמת בנוף פתוח, מתאים לרוכבים עם ניסיון בסיסי.",
+   lat:32.3400,lon:35.4900,src:"https://www.kkl.org.il/bike/trips/2928/"},
+  {name:"סינגל פאמפטרק אלון הגליל",region:"גליל תחתון",type:"סינגל",diff:"קל",km:5,el:60,dir:"לולאה",ebike:true,
+   desc:"מסלול פאמפטרק קצר ומהנה באלון הגליל לתרגול טכניקה. מצוין לילדים, מתחילים וחימום לפני רכיבה ארוכה.",
+   lat:32.7900,lon:35.2250,src:"https://www.kkl.org.il/bike/trips/2764/"},
+  {name:"שביל אופניים גבעת אלה",region:"גליל תחתון",type:"שביל יער",diff:"קל",km:11,el:180,dir:"לולאה",ebike:true,
+   desc:"שביל נוח ביער ציפורי על גבעת אלה. נגיש למשפחות ולחשמליים, חיבור לרשת ציפורי הגדולה.",
+   lat:32.7300,lon:35.2400,src:"https://www.kkl.org.il/bike/trips/2008/"},
+  {name:"שביל אופניים קנים",region:"שרון",type:"שביל יער",diff:"קל",km:13,el:120,dir:"לולאה",ebike:true,
+   desc:"שביל אופניים ביער קנים שבשרון. מישורי, מוצל ונגיש, מתאים לכל המשפחה ולרכיבת אחר-צהריים נינוחה.",
+   lat:32.2900,lon:34.9700,src:"https://www.kkl.org.il/bike/trips/2003/"},
+  {name:"שביל אופניים מעלה נחל אלכסנדר",region:"שרון",type:"שביל יער",diff:"קל",km:18,el:90,dir:"נקודה לנקודה",ebike:true,
+   desc:"שביל לאורך נחל אלכסנדר בשרון. מים, צל וטבע, מישורי ונגיש לחלוטין. אידיאלי למשפחות ולחשמליים.",
+   lat:32.3900,lon:34.9000,src:"https://www.kkl.org.il/bike/trips/alexander_stream_road/"},
+  {name:"סינגלים ביער חורשים",region:"שרון",type:"סינגל",diff:"בינוני",km:14,el:200,dir:"לולאה",ebike:false,
+   desc:"היער היחיד בשרון — רשת סינגלים טכניים קצרים ומהנים בין עליות וירידות. אזור בילוי ותיק לרוכבי השרון.",
+   lat:32.2300,lon:34.9900,src:"https://www.biketrips.co.il/horashim1"},
+  {name:"סינגל כרם מהר״ל — נחל מערות",region:"כרמל",type:"מעורב",diff:"קשה",km:40,el:1060,dir:"לולאה",ebike:false,
+   desc:"מסלול כרמל אתגרי המשלב סינגל בוסתן, הר שוקף ונחל אלון. 20 ק״מ סינגלים, טיפוס מצטבר ענק ונופי כרמל מרהיבים.",
+   lat:32.6900,lon:34.9700,src:"https://idoeliav.com"},
+  {name:"סינגל השלוחה",region:"כרמל",type:"סינגל",diff:"בינוני",km:16,el:340,dir:"לולאה",ebike:false,
+   desc:"סינגל מסומן וברור בכרמל סמוך לחניון אתאטורק. חורש, עליות מתונות וירידות זורמות, חיבור לעמק מהר״ל.",
+   lat:32.6700,lon:34.9600,src:"https://www.kkl.org.il/bike/trips/2972/"},
+  {name:"סינגל גוש עציון",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:20,el:480,dir:"לולאה",ebike:false,
+   desc:"סינגל בגוש עציון בין נופי הרים והיסטוריה מקראית. טיפוסים מתגמלים, חורש וטרסות עתיקות.",
+   lat:31.6500,lon:35.1200,src:"https://bikepanel.com"},
+  {name:"סינגל יער יד מרדכי",region:"דרום / נגב צפוני",type:"סינגל",diff:"קל",km:12,el:150,dir:"לולאה",ebike:true,
+   desc:"סינגל ביער יד מרדכי בדרום. קצר, זורם ונגיש, מתאים למשפחות, למתחילים ולחשמליים.",
+   lat:31.5900,lon:34.5600,src:"https://www.kkl.org.il/bike/trips/300417/"},
+
+  {name:"סינגל גוש עציון (5 המעיינות)",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:27,el:550,dir:"לולאה",ebike:false,
+   desc:"סינגל מעגלי על גב ההר בגובה 900 מ׳ — אמת הביאר, דרך האבות, 5 מעיינות והאלון הבודד. נופים מטריפים וטבילות בדרך.",
+   lat:31.6550,lon:35.1150,src:"https://travel.walla.co.il/item/3382181"},
+  {name:"סינגל המעיינות גוש עציון",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:18.5,el:420,dir:"לולאה",ebike:false,
+   desc:"מקיף את ראש צורים בין 6 נחלים ומעיינות (עין צורים, עין מסלע, עין אבו כלאב). מסומן בשלט אדום עם רוכב, הרבה עליות.",
+   lat:31.6600,lon:35.1200,src:"https://www.sipurderech.co.il"},
+  {name:"סינגל טלמונים",region:"ירושלים והרים",type:"סינגל",diff:"קשה",km:16,el:520,dir:"לולאה",ebike:false,
+   desc:"סינגל מהונדס המקיף את טלמונים בחבל בנימין (BibleBike), עם אלמנטים מתקדמים כמו לופ 360°. מסומן בזאב שואג על אופניים.",
+   lat:31.9300,lon:35.1100,src:"https://bikepanel.com"},
+  {name:"סינגל חורש טלמונים",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:14,el:400,dir:"לולאה",ebike:false,
+   desc:"חלק מפרויקט הסינגלים של בנימין — חורש, טיפוסים ונופי הרים. מתחבר לסינגל הכרמים והמעיינות בסביבה.",
+   lat:31.9350,lon:35.1050,src:"https://www.binyamin.org.il"},
+  {name:"סינגל נחל קטלב (הסטף)",region:"ירושלים והרים",type:"סינגל",diff:"בינוני",km:15,el:450,dir:"לולאה",ebike:false,
+   desc:"סינגל הררי בהרי ירושלים בין הסטף, עין כרם ונחל קטלב. חורש טבעי, טרסות ומעיינות, רכיבה אתגרית 5 דקות מירושלים.",
+   lat:31.7650,lon:35.1300,src:"https://www.shvilnet.net/map.asp?map=246"},
+  {name:"סינגל ואדי קלט",region:"מדבר יהודה",type:"מעורב",diff:"קשה",km:24,el:600,dir:"נקודה לנקודה",ebike:false,
+   desc:"רכיבת מדבר דרמטית בנחל פרת/ואדי קלט מירושלים אל בקעת יריחו. מצוקים, מעיינות ומנזרים, 5 דקות מהעיר לעולם אחר.",
+   lat:31.8350,lon:35.2900,src:"https://bikepanel.com"},
+  {name:"שביל אופניים כוכב יאיר–צור יגאל",region:"שרון",type:"שביל יער",diff:"קל",km:14,el:200,dir:"לולאה",ebike:true,
+   desc:"שביל אופניים סובב כוכב יאיר וצור יגאל בשולי השומרון. נגיש, נופי ומתאים למשפחות ולחשמליים.",
+   lat:32.2250,lon:35.0050,src:"https://bikepanel.com"},
+  {name:"סינגל יער קהילתי שוקדה (כחול)",region:"נגב מערבי",type:"סינגל",diff:"קל",km:16,el:140,dir:"חד-כיווני",ebike:true,
+   desc:"סינגל כחול ביער שוקדה בדרום האדום, מתחבר לסינגל בארי. כלניות בחורף, שטח מישורי וזורם, מצוין לחשמלי.",
+   lat:31.3000,lon:34.4500,src:"https://habsor.co.il"},
+  {name:"סינגל אבו-חוף",region:"נגב צפוני",type:"סינגל",diff:"בינוני",km:17,el:260,dir:"לולאה",ebike:true,
+   desc:"סינגל בגוש יערות להב סמוך לחורבת אבו-חוף ושרידי כנסיות עתיקות. נוף ספר-מדבר וזרימה נעימה.",
+   lat:31.3750,lon:34.8550,src:"https://www.kkl.org.il/bike/trips/1425/"},
+  {name:"סינגל יער עירון",region:"כרמל / רמות מנשה",type:"סינגל",diff:"בינוני",km:18,el:380,dir:"לולאה",ebike:false,
+   desc:"סינגל חדש ביער עירון באזור ואדי ערה. חורש, קטעים זורמים ונופי רמות מנשה. מסומן ומתוחזק היטב.",
+   lat:32.4900,lon:35.0300,src:"https://www.kkl.org.il/bike/trips/hiron_070825/"},
+  {name:"סינגל הזורע–נחל השופט",region:"רמות מנשה",type:"סינגל",diff:"בינוני",km:19,el:420,dir:"לולאה",ebike:false,
+   desc:"סינגל טכני חצי-מוצל ומסודר באזור הזורע ונחל השופט. עבודה יפה של בוני שבילים, קטעים זורמים ומאתגרים.",
+   lat:32.6050,lon:35.1100,src:"http://www.mountainbike.co.il"},
+  {name:"סינגל סובב טבעון",region:"גלבוע ועמקים",type:"סינגל",diff:"בינוני",km:20,el:400,dir:"לולאה",ebike:false,
+   desc:"קומפלקס סינגלי טבעון בין יערות ונופי עמק יזרעאל. קטעים זורמים וטכניים, מסלול אהוב על רוכבי הצפון.",
+   lat:32.7150,lon:35.1250,src:"https://sites.google.com/view/mtb-israel"},
+
+  {name:"שביל הגולן — מנמרוד לעין זיוון",region:"רמת הגולן",type:"מעורב",diff:"קשה",km:35,el:850,dir:"נקודה לנקודה",ebike:true,
+   desc:"מקטע צפוני של שביל הגולן דרך הר אודם ועמק הבכא. שתי עליות משמעותיות בגובה 900 מ׳ — מושלם לחשמלי שמבליע את הטיפוס.",
+   lat:33.2200,lon:35.7150,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=178"},
+  {name:"רוכב הגולן — דרום (דליות לאון)",region:"רמת הגולן",type:"מעורב",diff:"קשה",km:40,el:900,dir:"נקודה לנקודה",ebike:true,
+   desc:"קטע מאתגר וארוך מעל המורדות המערביים של דרום הגולן — נחל סמך, רוג׳ום אל הירי, תצפיות לכנרת. טווח אידיאלי לחשמלי.",
+   lat:32.8400,lon:35.7200,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=178"},
+  {name:"סינגל הר אודם–עין זיוון",region:"רמת הגולן",type:"מעורב",diff:"בינוני",km:30,el:600,dir:"לולאה",ebike:true,
+   desc:"מסלול גולני נהדר דרך יער אודם, פסגת הר וולקני ועין מוקש לטבילה. נופים פתוחים בגובה 900 מ׳, עליות שהחשמלי מנצח.",
+   lat:33.1850,lon:35.7350,src:"https://www.biketrips.co.il/cherry1"},
+  {name:"מלך הצפון — מג׳דל שמס",region:"רמת הגולן",type:"מעורב",diff:"אתגרי",km:45,el:1100,dir:"לולאה",ebike:true,
+   desc:"רכיבת גובה מהיישוב הגבוה בגולן — 500 מ׳ טיפוס ב-10 ק״מ הראשונים בלבד, נחל גובתה ופריחת חצבים. טיפוס שמזמין חשמלי.",
+   lat:33.2680,lon:35.7700,src:"https://bikepanel.com/the-northern-throne/"},
+  {name:"מרום גולן–אורטל–אלוני הבשן",region:"רמת הגולן",type:"מעורב",diff:"בינוני",km:32,el:450,dir:"לולאה",ebike:true,
+   desc:"מסלול מעגלי בצפון הגולן בין מרום גולן, עין זיוון, אורטל ואלוני הבשן. רמה געשית פתוחה, מצוין לחשמלי לכיסוי מרחק.",
+   lat:33.1350,lon:35.7600,src:"http://www.groopy.co.il/trackinfo.aspx?pid=1459"},
+  {name:"מסלול גדות (גליל עליון)",region:"גליל עליון",type:"מעורב",diff:"קשה",km:65,el:1100,dir:"לולאה",ebike:true,
+   desc:"מסלול ארוך מקיבוץ גדות — 65 ק״מ / 1,100 מ׳ טיפוס בגרסה המלאה (גם 52 ו-37 ק״מ). דרגת קושי גבוהה, אידיאלי לחשמלי.",
+   lat:33.0150,lon:35.6200,src:"https://mastershaifa.org.il"},
+  {name:"בניאס–צומת רוויה",region:"גליל עליון",type:"שביל יער",diff:"קל",km:15,el:430,dir:"נקודה לנקודה",ebike:true,
+   desc:"רכיבה מהבניאס לצומת רוויה עם תצפית לעמק החולה ולגולן. 430 מ׳ עליות בנוף מים וירוק, נוח לחשמלי ולמשפחות.",
+   lat:33.2480,lon:35.6940,src:"https://www.cycleways.app/"},
+  {name:"סינגל אנדורו יער שגב (ארוך)",region:"גליל תחתון",type:"סינגל",diff:"אתגרי",km:24,el:800,dir:"לולאה",ebike:true,
+   desc:"חיבור מלא של סינגלי שגב ואנדורו עם טיפוס מצטבר גבוה. אגרסיבי וטכני — החשמלי מאפשר לחזור על הירידות שוב ושוב.",
+   lat:32.8650,lon:35.2400,src:"https://www.kkl.org.il/bike/trips/2974/"},
+  {name:"חמשוש מצפה רמון (פסלים-חווה-שב״י)",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:38,el:480,dir:"לולאה",ebike:true,
+   desc:"מסלול מעגלי מזרחית למצפה רמון — פארק הפסלים, סינגל חווה ושביל ישראל לאופניים. ניתן לרכוב רגיל או חשמלי.",
+   lat:30.6100,lon:34.8050,src:"https://www.ganorbikes.co.il/events/hmsws-sdh-bwqr-mzph-rmwn"},
+];
+
+/* ---- מצב ---- */
+const state={q:"",region:"",type:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:""};
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const diffClass=d=>({"קל":"b-green","בינוני":"b-blue","קשה":"b-red","אתגרי":"b-black"}[d]||"b-blue");
+/* ויזואל ייחודי לפי אזור: גרדיאנט + אייקון נושא */
+const regionVisual=r=>{
+  const map={
+    "גליל":["#1a7d4d","#3aa676","🌲"],"גולן":["#2d6e4e","#5ba37a","⛰️"],
+    "כרמל":["#2e7d32","#66a06a","🌲"],"מנשה":["#3d8b40","#7ab07d","🌿"],
+    "גלבוע":["#7a8b2e","#a8b85a","🌾"],"עמק":["#8a9a2e","#bcc760","🌾"],
+    "מדבר":["#b5651d","#d99a5b","🏜️"],"נגב":["#c2731c","#e0a468","🏜️"],
+    "מכתש":["#a85420","#cf8a52","🪨"],"ערבה":["#bf6b1a","#e3a05e","🌵"],"אילת":["#c97e2a","#e8b478","🏜️"],
+    "ירושלים":["#6b5b95","#9788bd","🏔️"],"שפלה":["#5a8a3c","#8bb56a","🌳"],
+    "שרון":["#3a8a6e","#6cb89c","🌊"],"מרכז":["#4a8a5c","#7cb88c","🌳"],"כנרת":["#2a7a9a","#5ba8c5","🌊"],"חיפה":["#2e7a6e","#5fa89c","🌊"]
+  };
+  for(const k in map){if(r.includes(k))return map[k];}
+  return ["#0a7d4d","#0071e3","🚵"];
+};
+
+/* מילוי dropdowns */
+function fill(id,vals){const el=$(id);[...new Set(vals)].sort().forEach(v=>{const o=document.createElement("option");o.value=v;o.textContent=v;el.appendChild(o)})}
+fill("#region",TRACKS.map(t=>t.region));
+fill("#type",TRACKS.map(t=>t.type));
+fill("#dir",TRACKS.map(t=>t.dir));
+
+/* כותרת — סטטיסטיקה */
+$("#hcount").textContent=TRACKS.length;
+$("#hkm").textContent=Math.round(TRACKS.reduce((s,t)=>s+t.km,0));
+$("#hebike").textContent=TRACKS.filter(t=>t.ebike).length;
+
+/* סינון */
+function filtered(){
+  let list=TRACKS.filter(t=>{
+    if(state.q){const q=state.q.toLowerCase();if(!(t.name+t.region+t.desc).toLowerCase().includes(q))return false}
+    if(state.region&&t.region!==state.region)return false;
+    if(state.type&&t.type!==state.type)return false;
+    if(state.dir&&t.dir!==state.dir)return false;
+    if(state.diffs.size&&!state.diffs.has(t.diff))return false;
+    if(state.ebike&&!t.ebike)return false;
+    if(t.km>state.km)return false;
+    if(t.el>state.el)return false;
+    return true;
+  });
+  const s=state.sort;
+  if(s==="km-asc")list.sort((a,b)=>a.km-b.km);
+  else if(s==="km-desc")list.sort((a,b)=>b.km-a.km);
+  else if(s==="el-asc")list.sort((a,b)=>a.el-b.el);
+  else if(s==="el-desc")list.sort((a,b)=>b.el-a.el);
+  else if(s==="name")list.sort((a,b)=>a.name.localeCompare(b.name,"he"));
+  return list;
+}
+
+/* האם יש סינון פעיל כלשהו */
+function anyActive(){
+  return state.q||state.region||state.type||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500;
+}
+function activeCount(){
+  let n=0;
+  if(state.region)n++; if(state.type)n++; if(state.dir)n++; if(state.sort)n++;
+  n+=state.diffs.size; if(state.ebike)n++;
+  if(state.km<120)n++; if(state.el<1500)n++;
+  return n;
+}
+
+function render(){
+  const list=filtered(), g=$("#grid");
+  $("#rescount").textContent=list.length;
+  $("#clearBtn").classList.toggle("show",!!anyActive());
+  const ac=activeCount(), badge=$("#activeBadge");
+  badge.textContent=ac; badge.classList.toggle("show",ac>0);
+  if(!list.length){
+    g.innerHTML=`<div class="empty">
+      <div style="font-size:46px;margin-bottom:10px">🚵‍♂️</div>
+      <p style="font-size:17px;color:var(--ink);font-weight:600;margin-bottom:6px">אין מסלולים שמתאימים לסינון</p>
+      <p style="margin-bottom:16px">נסו להרחיב את הקריטריונים או להתחיל מחדש.</p>
+      <button class="btn btn-primary" style="max-width:200px;margin:0 auto" onclick="clearAll()">נקה את כל הסינונים</button>
+    </div>`;
+    return;
+  }
+  g.innerHTML=list.map((t,i)=>`
+    <article class="card diff-${diffClass(t.diff).slice(2)}" style="animation-delay:${Math.min(i*40,400)}ms"
+       data-i="${TRACKS.indexOf(t)}" tabindex="0" role="button"
+       aria-label="${t.name}, ${t.region}, קושי ${t.diff}, ${t.km} קילומטר">
+      <div class="top" style="background:linear-gradient(135deg,${regionVisual(t.region)[0]},${regionVisual(t.region)[1]})">
+        <span class="terrain-icon">${regionVisual(t.region)[2]}</span>
+        <span class="region">${t.region}</span>
+      </div>
+      <div class="body">
+        <h3>${t.name}</h3>
+        <div class="badges">
+          <span class="badge ${diffClass(t.diff)}">${t.diff}</span>
+          <span class="badge b-blue">${t.type}</span>
+          ${t.ebike?'<span class="badge b-ebike">⚡ חשמלי</span>':''}
+          ${t.gpx?'<span class="badge b-green">✓ GPX</span>':''}
+        </div>
+        <p class="desc">${t.desc}</p>
+        <div class="meta">
+          <span>📏 <b>${t.km}</b> ק״מ</span>
+          <span>⛰️ <b>${t.el}</b> מ׳</span>
+          <span>🔁 ${t.dir}</span>
+        </div>
+      </div>
+    </article>`).join("");
+  $$(".card").forEach(c=>{
+    const open=()=>openModal(TRACKS[+c.dataset.i]);
+    c.onclick=open;
+    c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
+  });
+  updateMap(list);
+}
+
+/* ניקוי כל הסינונים */
+function clearAll(){
+  state.q="";state.region="";state.type="";state.dir="";state.diffs.clear();
+  state.ebike=false;state.km=120;state.el=1500;state.sort="";
+  $("#q").value="";$("#region").value="";$("#type").value="";$("#dir").value="";$("#sort").value="";
+  $("#km").value=120;$("#kmval").textContent=120;$("#el").value=1500;$("#elval").textContent=1500;
+  $$(".chip").forEach(c=>c.classList.remove("on"));
+  render();
+}
+
+/* ---- מחולל GPX ---- */
+function makeGPX(t){
+  // יוצר מסלול דמה ריאליסטי סביב נקודת ההתחלה (loop קטן) לצורכי ניווט כללי
+  const pts=[],n=24,r=0.012*(t.km/15);
+  for(let i=0;i<=n;i++){
+    const a=(i/n)*Math.PI*2;
+    const lat=(t.lat+Math.sin(a)*r*0.7+Math.sin(a*3)*r*0.15).toFixed(6);
+    const lon=(t.lon+Math.cos(a)*r+Math.cos(a*2)*r*0.2).toFixed(6);
+    const ele=(200+Math.sin(a*2)*t.el*0.5).toFixed(1);
+    pts.push(`      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`);
+  }
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="Rochvim Kavua" xmlns="http://www.topografix.com/GPX/1/1">
+  <metadata><name>${t.name}</name><desc>${t.desc}</desc></metadata>
+  <wpt lat="${t.lat}" lon="${t.lon}"><name>נקודת התחלה — ${t.name}</name></wpt>
+  <trk><name>${t.name}</name><type>${t.type}</type>
+    <trkseg>
+${pts.join("\n")}
+    </trkseg>
+  </trk>
+</gpx>`;
+}
+function downloadGPX(t){
+  const blob=new Blob([makeGPX(t)],{type:"application/gpx+xml"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=t.name.replace(/[\/\\]/g,"-")+".gpx";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+}
+
+/* ---- מודאל ---- */
+function openModal(t){
+  const time=Math.round(t.km/12+t.el/400);
+  $("#modal").innerHTML=`
+    <div class="head">
+      <button class="close" onclick="closeModal()">✕</button>
+      <h2>${t.name}</h2>
+      <div class="sub">${t.region} · ${t.type}${t.gpx?' · <b style="color:var(--accent)">✓ GPX מאומת</b>':''}</div>
+    </div>
+    <div class="stats">
+      <div><b>${t.km}</b><small>ק״מ</small></div>
+      <div><b>${t.el}</b><small>מ׳ טיפוס</small></div>
+      <div><b>~${time}</b><small>שעות</small></div>
+    </div>
+    <div class="content">
+      <p>${t.desc}</p>
+      <div class="kv"><span>דרגת קושי</span><span>${t.diff}</span></div>
+      <div class="kv"><span>כיווניות</span><span>${t.dir}</span></div>
+      <div class="kv"><span>מתאים לאופני חשמל</span><span>${t.ebike?'✅ כן':'⚠️ פחות מומלץ'}</span></div>
+      <div class="kv"><span>נקודת התחלה</span><span>${t.lat.toFixed(4)}, ${t.lon.toFixed(4)}</span></div>
+      <div id="modalMap" class="map-modal" aria-label="מפת נקודת ההתחלה"></div>
+      <p style="font-size:12.5px;margin:16px 0 0;color:var(--ink-soft)">להורדת קובץ ניווט <b>מדויק</b> — לחצו על "GPX אמיתי" (מסלול מסומן ב-Israel Hiking Map) או על דף המסלול המקורי. ה-GPX המקומי הוא תוואי מקורב לתצוגה מהירה בלבד.</p>
+      <div class="actions">
+        <a class="btn btn-primary" target="_blank" href="${t.gpx ? t.gpx : 'https://israelhiking.osm.org.il/?s='+encodeURIComponent(t.name)}">📥 ${t.gpx ? 'הורדת GPX מדויק' : 'GPX (Israel Hiking)'}</a>
+        <a class="btn btn-ghost" target="_blank" href="https://waze.com/ul?ll=${t.lat},${t.lon}&navigate=yes">🧭 ניווט בוויז</a>
+      </div>
+      <div class="actions" style="margin-top:8px">
+        <a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול המקורי</a>
+        <button class="btn btn-ghost" id="dlbtn">⬇️ GPX מקומי (מקורב)</button>
+      </div>
+    </div>`;
+  $("#dlbtn").onclick=()=>downloadGPX(t);
+  $("#overlay").classList.add("show");
+  // מפת נקודת התחלה במודאל
+  if(typeof L!=="undefined"){
+    setTimeout(()=>{
+      const el=$("#modalMap"); if(!el)return;
+      const mm=L.map(el,{scrollWheelZoom:false,attributionControl:false}).setView([t.lat,t.lon],13);
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:17}).addTo(mm);
+      const icon=L.divIcon({className:"",html:`<div class="pin ${pinClass(t.diff)}"></div>`,iconSize:[22,22],iconAnchor:[11,22]});
+      L.marker([t.lat,t.lon],{icon}).addTo(mm);
+      setTimeout(()=>mm.invalidateSize(),80);
+    },100);
+  }
+}
+function closeModal(){$("#overlay").classList.remove("show")}
+$("#overlay").onclick=e=>{if(e.target.id==="overlay")closeModal()};
+document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+
+/* ---- אירועי סינון ---- */
+$("#q").oninput=e=>{state.q=e.target.value;render()};
+$("#region").onchange=e=>{state.region=e.target.value;render()};
+$("#type").onchange=e=>{state.type=e.target.value;render()};
+$("#dir").onchange=e=>{state.dir=e.target.value;render()};
+$("#km").oninput=e=>{state.km=+e.target.value;$("#kmval").textContent=e.target.value;render()};
+$("#el").oninput=e=>{state.el=+e.target.value;$("#elval").textContent=e.target.value;render()};
+$("#sort").onchange=e=>{state.sort=e.target.value;render()};
+$("#clearBtn").onclick=clearAll;
+$("#toggleFilters").onclick=function(){
+  const panel=$("#panel"), open=panel.classList.toggle("open");
+  this.setAttribute("aria-expanded",open);
+};
+$$(".chip[data-diff]").forEach(c=>{
+  c.setAttribute("role","button");c.setAttribute("tabindex","0");
+  const toggle=()=>{
+    const d=c.dataset.diff;
+    if(state.diffs.has(d)){state.diffs.delete(d);c.classList.remove("on")}
+    else{state.diffs.add(d);c.classList.add("on")}
+    render();
+  };
+  c.onclick=toggle;
+  c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}};
+});
+const ebc=$("#ebikeChip");ebc.setAttribute("role","button");ebc.setAttribute("tabindex","0");
+const ebToggle=function(){state.ebike=!state.ebike;ebc.classList.toggle("on",state.ebike);render()};
+ebc.onclick=ebToggle;
+ebc.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ebToggle()}};
+
+/* ---- מצב תצוגה בהיר/כהה ---- */
+(function(){
+  const btn=$("#themeBtn"), root=document.documentElement;
+  const sysDark=window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches;
+  let dark=sysDark;
+  function apply(){root.setAttribute("data-theme",dark?"dark":"light");btn.textContent=dark?"☀️":"🌙";}
+  apply();
+  btn.onclick=()=>{dark=!dark;apply();};
+})();
+
+/* ---- מפה אינטראקטיבית (Leaflet) ---- */
+let map=null, markersLayer=null, mapReady=false;
+const pinClass=d=>({"קל":"pin-green","בינוני":"pin-blue","קשה":"pin-red","אתגרי":"pin-black"}[d]||"pin-blue");
+function initMap(){
+  if(mapReady||typeof L==="undefined")return;
+  map=L.map("map",{scrollWheelZoom:false}).setView([31.4,35.0],7);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
+    maxZoom:18, attribution:'© OpenStreetMap'
+  }).addTo(map);
+  markersLayer=L.layerGroup().addTo(map);
+  mapReady=true;
+  updateMap(filtered());
+}
+function updateMap(list){
+  if(!mapReady||!markersLayer)return;
+  markersLayer.clearLayers();
+  const bounds=[];
+  list.forEach(t=>{
+    const icon=L.divIcon({className:"",html:`<div class="pin ${pinClass(t.diff)}"></div>`,iconSize:[22,22],iconAnchor:[11,22]});
+    const m=L.marker([t.lat,t.lon],{icon});
+    const idx=TRACKS.indexOf(t);
+    m.bindPopup(`<b>${t.name}</b><div class="pop-meta">${t.region} · ${t.diff} · ${t.km} ק״מ · ${t.el} מ׳${t.ebike?' · ⚡':''}</div><button onclick="openModal(TRACKS[${idx}])">פרטים והורדת GPX</button>`);
+    markersLayer.addLayer(m);
+    bounds.push([t.lat,t.lon]);
+  });
+  if(bounds.length)map.fitBounds(bounds,{padding:[40,40],maxZoom:11});
+}
+/* מתג רשימה / מפה */
+$("#viewList").onclick=function(){
+  document.body.classList.remove("map-view");
+  this.classList.add("on");this.setAttribute("aria-selected","true");
+  $("#viewMap").classList.remove("on");$("#viewMap").setAttribute("aria-selected","false");
+};
+$("#viewMap").onclick=function(){
+  document.body.classList.add("map-view");
+  this.classList.add("on");this.setAttribute("aria-selected","true");
+  $("#viewList").classList.remove("on");$("#viewList").setAttribute("aria-selected","false");
+  initMap();
+  setTimeout(()=>{if(map){map.invalidateSize();updateMap(filtered());}},120);
+};
+
+render();
+
+/* ---- הזרקת Schema.org דינמי לכל המסלולים (SEO — תוצאות עשירות) ---- */
+(function injectSchema(){
+  const items=TRACKS.map((t,i)=>({
+    "@type":"ListItem","position":i+1,
+    "item":{
+      "@type":["TouristAttraction","Place"],
+      "name":t.name,
+      "description":t.desc,
+      "url":"https://rochvim-kavuh.com/#"+encodeURIComponent(t.name),
+      "touristType":"רוכבי אופני שטח",
+      "geo":{"@type":"GeoCoordinates","latitude":t.lat,"longitude":t.lon},
+      "address":{"@type":"PostalAddress","addressRegion":t.region,"addressCountry":"IL"},
+      "additionalProperty":[
+        {"@type":"PropertyValue","name":"אורך","value":t.km+" ק\"מ"},
+        {"@type":"PropertyValue","name":"טיפוס מצטבר","value":t.el+" מ'"},
+        {"@type":"PropertyValue","name":"דרגת קושי","value":t.diff},
+        {"@type":"PropertyValue","name":"מתאים לאופני חשמל","value":t.ebike?"כן":"לא"}
+      ]
+    }
+  }));
+  const schema={
+    "@context":"https://schema.org","@type":"ItemList",
+    "name":"מסלולי אופני שטח בישראל — רוכבים קבוע",
+    "numberOfItems":TRACKS.length,
+    "itemListElement":items
+  };
+  const s=document.createElement("script");
+  s.type="application/ld+json";
+  s.textContent=JSON.stringify(schema);
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
