@@ -10,6 +10,9 @@
 <meta name="theme-color" content="#0a7d4d" />
 <link rel="canonical" href="https://rochvim-kavuh.com/" />
 <meta property="og:url" content="https://rochvim-kavuh.com/" />
+<meta property="og:image" content="https://rochvim-kavuh.com/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:locale" content="he_IL" />
@@ -18,10 +21,13 @@
 <meta property="og:site_name" content="רוכבים קבוע" />
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://rochvim-kavuh.com/og-image.png" />
 <meta name="twitter:title" content="רוכבים קבוע — מאגר מסלולי השטח של ישראל" />
 <meta name="twitter:description" content="134 מסלולי אופני שטח וסינגלים מכל הארץ, עם סינון חכם וקובץ GPX להורדה." />
 <!-- Favicon (אופניים SVG inline) -->
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%230a7d4d'/%3E%3Ctext x='50' y='68' font-size='52' text-anchor='middle' fill='white'%3E🚵%3C/text%3E%3C/svg%3E" />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<link rel="icon" type="image/png" href="favicon-512.png" />
+<link rel="apple-touch-icon" href="favicon-512.png" />
 <!-- Schema.org -->
 <script type="application/ld+json">
 {"@context":"https://schema.org","@type":"WebSite","name":"רוכבים קבוע","alternateName":"Rochvim Kavuh","url":"https://rochvim-kavuh.com/","description":"מאגר מסלולי השטח של ישראל לרוכבי אופניים","inLanguage":"he","author":{"@type":"Person","name":"ארז ברזאני"},"publisher":{"@type":"Person","name":"ארז ברזאני"},"potentialAction":{"@type":"SearchAction","target":{"@type":"EntryPoint","urlTemplate":"https://rochvim-kavuh.com/?q={search_term_string}"},"query-input":"required name=search_term_string"}}
@@ -179,6 +185,11 @@
     padding:4px 11px;border-radius:999px;backdrop-filter:blur(4px)}
   .card .top .terrain-icon{position:absolute;top:50%;right:16px;transform:translateY(-50%);
     font-size:40px;opacity:.55;filter:drop-shadow(0 2px 6px rgba(0,0,0,.25))}
+  .fav-btn{position:absolute;top:10px;left:10px;width:34px;height:34px;border:0;border-radius:50%;
+    background:rgba(0,0,0,.35);backdrop-filter:blur(4px);font-size:16px;cursor:pointer;line-height:1;
+    display:grid;place-items:center;transition:transform .15s;z-index:2}
+  .fav-btn:hover{transform:scale(1.15)}
+  .fav-btn.on{background:rgba(255,255,255,.9)}
   .card .top .terrain{position:absolute;inset:0;opacity:.5;
     background-size:cover;background-position:center;mix-blend-mode:multiply}
   .card .body{padding:16px 18px 18px;flex:1;display:flex;flex-direction:column}
@@ -194,6 +205,8 @@
   .b-red{color:var(--red);border-color:var(--red)}
   .b-black{color:var(--ink);border-color:var(--ink)}
   .b-ebike{color:#b8860b;border-color:#b8860b;background:#b8860b14}
+  .b-runner{color:#c2410c;border-color:#c2410c;background:#c2410c14}
+  .b-alt{color:#7c3aed;border-color:#7c3aed;background:#7c3aed14}
 
   /* modal */
   .overlay{position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.5);backdrop-filter:blur(8px);
@@ -268,6 +281,12 @@
       <div class="row">
         <select id="region" aria-label="סינון לפי אזור"><option value="">כל האזורים</option></select>
         <select id="type" aria-label="סינון לפי סוג מסלול"><option value="">כל הסוגים</option></select>
+        <select id="cat" aria-label="סינון לפי קטגוריה">
+          <option value="">כל הקטגוריות</option>
+          <option value="regular">מסלולים רגילים</option>
+          <option value="runners">🏃 ראנרים / גרביטי</option>
+          <option value="alt">🧭 אלטרנטיביים / לא-רשמיים</option>
+        </select>
         <select id="dir" aria-label="סינון לפי כיווניות"><option value="">כל הכיוונים</option></select>
         <select id="sort" aria-label="מיון תוצאות">
           <option value="">מיון: ברירת מחדל</option>
@@ -276,6 +295,7 @@
           <option value="el-asc">טיפוס — נמוך לגבוה</option>
           <option value="el-desc">טיפוס — גבוה לנמוך</option>
           <option value="name">שם (א׳-ת׳)</option>
+          <option value="near">📍 קרוב אליי</option>
         </select>
       </div>
       <div class="row" style="margin-top:10px">
@@ -306,6 +326,7 @@
     <div class="view-toggle" role="tablist" aria-label="תצוגת רשימה או מפה">
       <button id="viewList" class="vt-btn on" role="tab" aria-selected="true">☰ רשימה</button>
       <button id="viewMap" class="vt-btn" role="tab" aria-selected="false">🗺️ מפה</button>
+      <button id="viewFav" class="vt-btn" aria-pressed="false">❤️ מועדפים</button>
     </div>
   </div>
   <div class="grid" id="grid"></div>
@@ -734,11 +755,62 @@ const TRACKS = [
   {name:"חמשוש מצפה רמון (פסלים-חווה-שב״י)",region:"נגב / מכתשים",type:"סינגל",diff:"בינוני",km:38,el:480,dir:"לולאה",ebike:true,
    desc:"מסלול מעגלי מזרחית למצפה רמון — פארק הפסלים, סינגל חווה ושביל ישראל לאופניים. ניתן לרכוב רגיל או חשמלי.",
    lat:30.6100,lon:34.8050,src:"https://www.ganorbikes.co.il/events/hmsws-sdh-bwqr-mzph-rmwn"},
+
+  /* === מסלולי Runners / גרביטי — ירידות מהירות וטכניות === */
+  {name:"טבריוס (Tiberius) — יער שווייץ",region:"גליל תחתון / כנרת",type:"סינגל",diff:"אתגרי",km:21,el:270,dir:"חד-כיווני",ebike:false,cat:"runners",
+   desc:"מסלול הגרביטי המסומן בארץ — משולש אדום מעל הכנרת. ירידה מהירה וטכנית בסטנדרט בנייה של פארק בחו״ל. רמת רכיבה גבוהה במיוחד, מיגון חובה. הקפצה/חשמלי לטיפוס.",
+   lat:32.7250,lon:35.5300,src:"https://bike.co.il/trip-swiss-forest-enduro-kkl/"},
+  {name:"ברניקי בלוז מלא — יער שווייץ",region:"גליל תחתון / כנרת",type:"סינגל",diff:"אתגרי",km:2.6,el:270,dir:"חד-כיווני",ebike:false,cat:"runners",
+   desc:"ראנר טהור — ריבוע אדום. 2.55 ק״מ של ירידה רצופה ו-270 מ׳ איבוד גובה. מהיר, תלול וזורם, מסטנדרט האנדורו החדש של קק״ל מעל טבריה. מיגון חובה.",
+   lat:32.7280,lon:35.5260,src:"https://bike.co.il/trip-swiss-forest-enduro-kkl/"},
+  {name:"טבריוס עליון + ברניקי תחתון",region:"גליל תחתון / כנרת",type:"סינגל",diff:"אתגרי",km:2.5,el:270,dir:"חד-כיווני",ebike:false,cat:"runners",
+   desc:"שילוב שני ראנרים לירידה אחת אגרסיבית — 2.48 ק״מ, 270 מ׳ ירידה. סימון משולב ריבוע ומשולש אדום, מתחיל מסינגל יער שווייץ הישן. לגרביטיסטים מנוסים.",
+   lat:32.7270,lon:35.5280,src:"https://bike.co.il/trip-swiss-forest-enduro-kkl/"},
+  {name:"מסלולי אנדורו יער שווייץ (DH)",region:"גליל תחתון / כנרת",type:"סינגל",diff:"אתגרי",km:3.3,el:300,dir:"חד-כיווני",ebike:false,cat:"runners",
+   desc:"מתחם הגרביטי המוביל בארץ — מורדות תלולים אל הכנרת, סטנדרט בנייה בינלאומי. שיפועים, דרופים ומהירות. טיפוס של 3.3 ק״מ או הקפצה. ציוד מגן מלא חובה.",
+   lat:32.7250,lon:35.5300,src:"https://bike.co.il/trip-swiss-forest-enduro-kkl/"},
+  {name:"ירידת הר מירון (עין ערבות–חניון מירון)",region:"גליל עליון",type:"מעורב",diff:"קשה",km:12,el:600,dir:"נקודה לנקודה",ebike:false,cat:"runners",
+   desc:"ירידה ארוכה ורצופה של 600 מ׳ גובה מפסגת הר מירון. תוואי שביל ישראל — דרך עפר חשופה שהופכת לירידה תלולה. מהיר ומתגמל, דורש בקרת בלמים טובה.",
+   lat:33.0050,lon:35.4050,src:"https://www.teva.org.il/israel-national-trail/id-3159"},
+
+  /* === מסלולים אלטרנטיביים / לא-רשמיים — פחות מתועדים === */
+  {name:"סכיני ערד / סינגל הר פרסה",region:"מדבר יהודה",type:"סינגל",diff:"אתגרי",km:14,el:350,dir:"לולאה",ebike:false,cat:"alt",
+   desc:"⚠️ מסלול לא רשמי, טכני ואגרסיבי במיוחד — מהקשים באזור ערד. משתלב עם סינגל נחל בוקק. לא מסומן רשמית; דרושים ניסיון, ניווט עצמאי וזהירות. ודאו חוקיות ובטיחות.",
+   lat:31.2400,lon:35.2000,src:"https://bike.co.il/trips-edu-desert-trail-regional-info/"},
+  {name:"סינגל נחל בוקק (אלטרנטיבי)",region:"מדבר יהודה",type:"סינגל",diff:"קשה",km:11,el:280,dir:"נקודה לנקודה",ebike:false,cat:"alt",
+   desc:"סינגל מדברי טכני באזור ים המלח, פחות מוכר ולא תמיד מסומן. משתלב עם סכיני ערד ליום אגרסיבי. נופי מצוקים מרהיבים. דרושה זהירות וניווט.",
+   lat:31.2000,lon:35.3500,src:"https://bike.co.il/trips-edu-desert-trail-regional-info/"},
+  {name:"שבילים לבנים סובב מודיעין",region:"מרכז / שפלה",type:"מעורב",diff:"בינוני",km:30,el:350,dir:"לולאה",ebike:true,cat:"alt",
+   desc:"אלטרנטיבה לסינגלים העמוסים של בן שמן — רשת שבילי עפר לבנים בשדות החקלאיים סביב מודיעין. נוף משתנה עם העונות, תצפיות ופינות קפה. פחות מתועד, נהדר לחשמלי.",
+   lat:31.8980,lon:35.0100,src:"https://bike.co.il/trip-routes-around-modiin/"},
+  {name:"נחל גרר — אזור הבתרונות",region:"נגב מערבי",type:"מעורב",diff:"בינוני",km:24,el:200,dir:"לולאה",ebike:true,cat:"alt",
+   desc:"מרחב בתרונות לס פחות מתועד בדרום. החלק הדרומי טכני ומגוון יותר עם מצוקונים. שטח משותף עם רכבי שטח — סופ״ש עמוס. נופי לס ייחודיים, מתאים גם לחשמלי.",
+   lat:31.4000,lon:34.6000,src:"https://bikepanel.com/nahal-gerar/"},
+  {name:"סינגל חמרית (שביל ישראל)",region:"מדבר יהודה",type:"סינגל",diff:"קל",km:10,el:120,dir:"נקודה לנקודה",ebike:true,cat:"alt",
+   desc:"סינגל חדש יחסית וממשיך את מסלול נחל פרצים, חלק משביל ישראל לאופניים. מתאים גם למתחילים. פחות מוכר, נוף מדברי פתוח. ודאו תנאי שטח לפני יציאה.",
+   lat:31.1300,lon:35.3700,src:"https://bike.co.il/trips-edu-desert-trail-regional-info/"},
 ];
 
 /* ---- מצב ---- */
-const state={q:"",region:"",type:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:""};
+const state={q:"",region:"",type:"",cat:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:"",favOnly:false,userLoc:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ---- מועדפים (localStorage) ---- */
+let FAVS=[];
+try{FAVS=JSON.parse(localStorage.getItem("rk_favs")||"[]");}catch(e){FAVS=[];}
+function isFav(name){return FAVS.includes(name);}
+function toggleFav(name){
+  if(FAVS.includes(name))FAVS=FAVS.filter(n=>n!==name);
+  else FAVS.push(name);
+  try{localStorage.setItem("rk_favs",JSON.stringify(FAVS));}catch(e){}
+  render();
+}
+/* ---- מרחק (Haversine) ---- */
+function distKm(lat1,lon1,lat2,lon2){
+  const R=6371,dLat=(lat2-lat1)*Math.PI/180,dLon=(lon2-lon1)*Math.PI/180;
+  const a=Math.sin(dLat/2)**2+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLon/2)**2;
+  return Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a)));
+}
 const diffClass=d=>({"קל":"b-green","בינוני":"b-blue","קשה":"b-red","אתגרי":"b-black"}[d]||"b-blue");
 /* ויזואל ייחודי לפי אזור: גרדיאנט + אייקון נושא */
 const regionVisual=r=>{
@@ -761,6 +833,27 @@ fill("#region",TRACKS.map(t=>t.region));
 fill("#type",TRACKS.map(t=>t.type));
 fill("#dir",TRACKS.map(t=>t.dir));
 
+/* עונה מומלצת ואחוז צל — נגזרים מהאזור ומסוג המסלול */
+function seasonOf(t){
+  const r=t.region;
+  if(/מדבר|נגב|מכתש|ערבה|אילת/.test(r)) return {txt:"חורף–אביב",emoji:"❄️🌸",hot:false};
+  if(/גולן|חרמון|גליל עליון/.test(r)) return {txt:"אביב–סתיו",emoji:"🌸🍂",hot:false};
+  if(/ירושלים|הרים/.test(r)) return {txt:"כל השנה (נעים בקיץ)",emoji:"🌤️",hot:false};
+  return {txt:"כל השנה",emoji:"🗓️",hot:false};
+}
+function shadeOf(t){
+  let s=40;
+  if(t.type==="שביל יער") s=75;
+  else if(t.type==="סינגל") s=55;
+  else if(t.type==="מעורב") s=45;
+  if(/מדבר|נגב|מכתש|ערבה|אילת/.test(t.region)) s-=30;
+  if(/יער|חורש/.test(t.desc)) s+=15;
+  if(/מוצל/.test(t.desc)) s+=15;
+  if(/פתוח|מישור|בתרונות|מדברי/.test(t.desc)) s-=10;
+  return Math.max(5,Math.min(95,s));
+}
+function shadeLabel(s){return s>=65?"מוצל":s>=40?"חלקית מוצל":"חשוף לשמש";}
+
 /* כותרת — סטטיסטיקה */
 $("#hcount").textContent=TRACKS.length;
 $("#hkm").textContent=Math.round(TRACKS.reduce((s,t)=>s+t.km,0));
@@ -772,11 +865,13 @@ function filtered(){
     if(state.q){const q=state.q.toLowerCase();if(!(t.name+t.region+t.desc).toLowerCase().includes(q))return false}
     if(state.region&&t.region!==state.region)return false;
     if(state.type&&t.type!==state.type)return false;
+    if(state.cat){const c=t.cat||"regular";if(c!==state.cat)return false;}
     if(state.dir&&t.dir!==state.dir)return false;
     if(state.diffs.size&&!state.diffs.has(t.diff))return false;
     if(state.ebike&&!t.ebike)return false;
     if(t.km>state.km)return false;
     if(t.el>state.el)return false;
+    if(state.favOnly&&!isFav(t.name))return false;
     return true;
   });
   const s=state.sort;
@@ -785,17 +880,21 @@ function filtered(){
   else if(s==="el-asc")list.sort((a,b)=>a.el-b.el);
   else if(s==="el-desc")list.sort((a,b)=>b.el-a.el);
   else if(s==="name")list.sort((a,b)=>a.name.localeCompare(b.name,"he"));
+  else if(s==="near"&&state.userLoc){
+    const u=state.userLoc;
+    list.sort((a,b)=>distKm(u.lat,u.lon,a.lat,a.lon)-distKm(u.lat,u.lon,b.lat,b.lon));
+  }
   return list;
 }
 
 /* האם יש סינון פעיל כלשהו */
 function anyActive(){
-  return state.q||state.region||state.type||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500;
+  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly;
 }
 function activeCount(){
   let n=0;
-  if(state.region)n++; if(state.type)n++; if(state.dir)n++; if(state.sort)n++;
-  n+=state.diffs.size; if(state.ebike)n++;
+  if(state.region)n++; if(state.type)n++; if(state.cat)n++; if(state.dir)n++; if(state.sort)n++;
+  n+=state.diffs.size; if(state.ebike)n++; if(state.favOnly)n++;
   if(state.km<120)n++; if(state.el<1500)n++;
   return n;
 }
@@ -822,6 +921,7 @@ function render(){
       <div class="top" style="background:linear-gradient(135deg,${regionVisual(t.region)[0]},${regionVisual(t.region)[1]})">
         <span class="terrain-icon">${regionVisual(t.region)[2]}</span>
         <span class="region">${t.region}</span>
+        <button class="fav-btn${isFav(t.name)?' on':''}" data-fav="${t.name.replace(/"/g,'&quot;')}" aria-label="הוספה למועדפים" title="מועדפים">${isFav(t.name)?'❤️':'🤍'}</button>
       </div>
       <div class="body">
         <h3>${t.name}</h3>
@@ -829,6 +929,8 @@ function render(){
           <span class="badge ${diffClass(t.diff)}">${t.diff}</span>
           <span class="badge b-blue">${t.type}</span>
           ${t.ebike?'<span class="badge b-ebike">⚡ חשמלי</span>':''}
+          ${t.cat==="runners"?'<span class="badge b-runner">🏃 ראנר</span>':''}
+          ${t.cat==="alt"?'<span class="badge b-alt">🧭 לא-רשמי</span>':''}
           ${t.gpx?'<span class="badge b-green">✓ GPX</span>':''}
         </div>
         <p class="desc">${t.desc}</p>
@@ -844,48 +946,21 @@ function render(){
     c.onclick=open;
     c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
   });
+  $$(".fav-btn").forEach(b=>{
+    b.onclick=e=>{e.stopPropagation();toggleFav(b.dataset.fav);};
+  });
   updateMap(list);
 }
 
 /* ניקוי כל הסינונים */
 function clearAll(){
-  state.q="";state.region="";state.type="";state.dir="";state.diffs.clear();
-  state.ebike=false;state.km=120;state.el=1500;state.sort="";
-  $("#q").value="";$("#region").value="";$("#type").value="";$("#dir").value="";$("#sort").value="";
+  state.q="";state.region="";state.type="";state.cat="";state.dir="";state.diffs.clear();
+  state.ebike=false;state.km=120;state.el=1500;state.sort="";state.favOnly=false;
+  $("#q").value="";$("#region").value="";$("#type").value="";$("#cat").value="";$("#dir").value="";$("#sort").value="";
   $("#km").value=120;$("#kmval").textContent=120;$("#el").value=1500;$("#elval").textContent=1500;
   $$(".chip").forEach(c=>c.classList.remove("on"));
+  $("#viewFav").classList.remove("on");$("#viewFav").setAttribute("aria-pressed","false");
   render();
-}
-
-/* ---- מחולל GPX ---- */
-function makeGPX(t){
-  // יוצר מסלול דמה ריאליסטי סביב נקודת ההתחלה (loop קטן) לצורכי ניווט כללי
-  const pts=[],n=24,r=0.012*(t.km/15);
-  for(let i=0;i<=n;i++){
-    const a=(i/n)*Math.PI*2;
-    const lat=(t.lat+Math.sin(a)*r*0.7+Math.sin(a*3)*r*0.15).toFixed(6);
-    const lon=(t.lon+Math.cos(a)*r+Math.cos(a*2)*r*0.2).toFixed(6);
-    const ele=(200+Math.sin(a*2)*t.el*0.5).toFixed(1);
-    pts.push(`      <trkpt lat="${lat}" lon="${lon}"><ele>${ele}</ele></trkpt>`);
-  }
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<gpx version="1.1" creator="Rochvim Kavua" xmlns="http://www.topografix.com/GPX/1/1">
-  <metadata><name>${t.name}</name><desc>${t.desc}</desc></metadata>
-  <wpt lat="${t.lat}" lon="${t.lon}"><name>נקודת התחלה — ${t.name}</name></wpt>
-  <trk><name>${t.name}</name><type>${t.type}</type>
-    <trkseg>
-${pts.join("\n")}
-    </trkseg>
-  </trk>
-</gpx>`;
-}
-function downloadGPX(t){
-  const blob=new Blob([makeGPX(t)],{type:"application/gpx+xml"});
-  const a=document.createElement("a");
-  a.href=URL.createObjectURL(blob);
-  a.download=t.name.replace(/[\/\\]/g,"-")+".gpx";
-  document.body.appendChild(a);a.click();a.remove();
-  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
 
 /* ---- מודאל ---- */
@@ -906,20 +981,26 @@ function openModal(t){
       <p>${t.desc}</p>
       <div class="kv"><span>דרגת קושי</span><span>${t.diff}</span></div>
       <div class="kv"><span>כיווניות</span><span>${t.dir}</span></div>
+      <div class="kv"><span>עונה מומלצת</span><span>${seasonOf(t).emoji} ${seasonOf(t).txt}</span></div>
+      <div class="kv"><span>צל במסלול</span><span>${shadeLabel(shadeOf(t))} (${shadeOf(t)}%)</span></div>
       <div class="kv"><span>מתאים לאופני חשמל</span><span>${t.ebike?'✅ כן':'⚠️ פחות מומלץ'}</span></div>
       <div class="kv"><span>נקודת התחלה</span><span>${t.lat.toFixed(4)}, ${t.lon.toFixed(4)}</span></div>
       <div id="modalMap" class="map-modal" aria-label="מפת נקודת ההתחלה"></div>
-      <p style="font-size:12.5px;margin:16px 0 0;color:var(--ink-soft)">להורדת קובץ ניווט <b>מדויק</b> — לחצו על "GPX אמיתי" (מסלול מסומן ב-Israel Hiking Map) או על דף המסלול המקורי. ה-GPX המקומי הוא תוואי מקורב לתצוגה מהירה בלבד.</p>
       <div class="actions">
-        <a class="btn btn-primary" target="_blank" href="${t.gpx ? t.gpx : 'https://israelhiking.osm.org.il/?s='+encodeURIComponent(t.name)}">📥 ${t.gpx ? 'הורדת GPX מדויק' : 'GPX (Israel Hiking)'}</a>
-        <a class="btn btn-ghost" target="_blank" href="https://waze.com/ul?ll=${t.lat},${t.lon}&navigate=yes">🧭 ניווט בוויז</a>
+        ${t.gpx
+          ? `<a class="btn btn-primary" target="_blank" href="${t.gpx}">📥 הורדת קובץ GPX</a>`
+          : `<a class="btn btn-primary" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>`}
+        <a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול ופרטים</a>
       </div>
-      <div class="actions" style="margin-top:8px">
-        <a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול המקורי</a>
-        <button class="btn btn-ghost" id="dlbtn">⬇️ GPX מקומי (מקורב)</button>
+      <p style="font-size:12.5px;margin:14px 0 0;color:var(--ink-soft)">${t.gpx?'קובץ GPX רשמי להורדה ולניווט.':'לקובץ GPX ותוואי מלא — היכנסו לדף המסלול המקורי. כפתור הניווט יוביל אתכם לנקודת ההתחלה.'}</p>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn btn-ghost" id="shareBtn">🔗 שיתוף המסלול</button>
+        <button class="btn btn-ghost" id="favModalBtn">${isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים'}</button>
       </div>
     </div>`;
-  $("#dlbtn").onclick=()=>downloadGPX(t);
+  $("#shareBtn").onclick=()=>shareTrack(t);
+  $("#favModalBtn").onclick=function(){toggleFav(t.name);this.textContent=isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים';};
+  history.replaceState(null,"","#"+encodeURIComponent(t.name));
   $("#overlay").classList.add("show");
   // מפת נקודת התחלה במודאל
   if(typeof L!=="undefined"){
@@ -933,7 +1014,21 @@ function openModal(t){
     },100);
   }
 }
-function closeModal(){$("#overlay").classList.remove("show")}
+function closeModal(){$("#overlay").classList.remove("show");if(location.hash)history.replaceState(null,"",location.pathname);}
+
+/* ---- שיתוף מסלול בודד ---- */
+function shareTrack(t){
+  const url=location.origin+location.pathname+"#"+encodeURIComponent(t.name);
+  const text=`${t.name} — ${t.region}\n${t.km} ק״מ · ${t.el} מ׳ טיפוס · ${t.diff}\nרוכבים קבוע:`;
+  if(navigator.share){
+    navigator.share({title:t.name,text:text,url:url}).catch(()=>{});
+  } else {
+    navigator.clipboard.writeText(text+" "+url).then(
+      ()=>alert("הקישור הועתק! אפשר להדביק ולשתף."),
+      ()=>prompt("העתיקו את הקישור לשיתוף:",url)
+    );
+  }
+}
 $("#overlay").onclick=e=>{if(e.target.id==="overlay")closeModal()};
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 
@@ -941,10 +1036,29 @@ document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
 $("#q").oninput=e=>{state.q=e.target.value;render()};
 $("#region").onchange=e=>{state.region=e.target.value;render()};
 $("#type").onchange=e=>{state.type=e.target.value;render()};
+$("#cat").onchange=e=>{state.cat=e.target.value;render()};
 $("#dir").onchange=e=>{state.dir=e.target.value;render()};
 $("#km").oninput=e=>{state.km=+e.target.value;$("#kmval").textContent=e.target.value;render()};
 $("#el").oninput=e=>{state.el=+e.target.value;$("#elval").textContent=e.target.value;render()};
-$("#sort").onchange=e=>{state.sort=e.target.value;render()};
+$("#sort").onchange=e=>{
+  const v=e.target.value;
+  if(v==="near"){
+    if(!navigator.geolocation){alert("הדפדפן לא תומך באיתור מיקום");e.target.value="";return;}
+    navigator.geolocation.getCurrentPosition(
+      pos=>{state.userLoc={lat:pos.coords.latitude,lon:pos.coords.longitude};state.sort="near";render();},
+      ()=>{alert("לא ניתן לאתר מיקום. ודאו שאישרתם גישה למיקום.");e.target.value="";state.sort="";render();}
+    );
+    state.sort="near";
+  } else {state.sort=v;render();}
+};
+$("#viewFav").onclick=function(){
+  state.favOnly=!state.favOnly;
+  this.classList.toggle("on",state.favOnly);
+  this.setAttribute("aria-pressed",state.favOnly);
+  document.body.classList.remove("map-view");
+  $("#viewList").classList.add("on");$("#viewMap").classList.remove("on");
+  render();
+};
 $("#clearBtn").onclick=clearAll;
 $("#toggleFilters").onclick=function(){
   const panel=$("#panel"), open=panel.classList.toggle("open");
@@ -1018,6 +1132,14 @@ $("#viewMap").onclick=function(){
 };
 
 render();
+
+/* פתיחת מסלול מקישור משותף (hash) */
+(function openFromHash(){
+  if(!location.hash)return;
+  const name=decodeURIComponent(location.hash.slice(1));
+  const t=TRACKS.find(x=>x.name===name);
+  if(t)setTimeout(()=>openModal(t),300);
+})();
 
 /* ---- הזרקת Schema.org דינמי לכל המסלולים (SEO — תוצאות עשירות) ---- */
 (function injectSchema(){
