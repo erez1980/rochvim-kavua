@@ -348,14 +348,14 @@
 const TRACKS = [
   {name:"סינגל הרצל — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"קל",km:10.5,el:180,dir:"לולאה",ebike:true,
    desc:"הסינגל הכחול הקלאסי של בן שמן. מעגלי, מוצל ומסומן היטב, עליות וירידות מתונות. מצוין למתחילים ולחשמליים.",
-   lat:31.9047,lon:34.9561,src:"https://www.outdooractive.co.il"},
+   lat:31.9047,lon:34.9561,src:"https://www.kkl.org.il/bike/trips/1964/"},
   {name:"סינגל ענבה — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"בינוני",km:22,el:270,dir:"לולאה",ebike:true,
    desc:"הסינגל האדום של בן שמן. ארוך וזורם, רשת שבילים מתוחזקת של קק״ל. נקודת התחלה במצפה מודיעין.",
    lat:31.9047,lon:34.9561,src:"https://www.kkl.org.il/bike/trips/1965/",
    gpx:"https://www.kkl.org.il/bike/files/Navigation_files/1965/634d5e36-ef1f-4a3c-84ca-551792c93c45_Large.gpx"},
   {name:"סינגל חדיד — יער בן שמן",region:"מרכז / שפלה",type:"סינגל",diff:"בינוני",km:11,el:200,dir:"חד-כיווני",ebike:true,
    desc:"הסינגל הירוק בצד הצפוני של בן שמן, מעבר לכביש 443. מעברי סלע מאתגרים בתחילתו ואז זרימה נעימה.",
-   lat:31.9201,lon:34.9620,src:"https://www.eyarok.org.il"},
+   lat:31.9201,lon:34.9620,src:"https://www.kkl.org.il/bike/trips/1961/"},
   {name:"סינגל עינב — פארק בריטניה",region:"שפלת יהודה",type:"סינגל",diff:"קל",km:10,el:160,dir:"לולאה",ebike:true,
    desc:"סינגל קצר, זורם ומהיר בצפון פארק בריטניה. מצוין למתחילים שרוצים להתנסות ברכיבת סינגלים סלחנית.",
    lat:31.6708,lon:34.9270,src:"https://www.shvilnet.net/maslulim-inner.asp?mtype=74&maslul=194"},
@@ -853,6 +853,8 @@ function shadeOf(t){
   return Math.max(5,Math.min(95,s));
 }
 function shadeLabel(s){return s>=65?"מוצל":s>=40?"חלקית מוצל":"חשוף לשמש";}
+/* האם למסלול יש GPX אמיתי — קישור ישיר או דף קק"ל ספציפי */
+function hasGPX(t){return !!t.gpx || /\/bike\/trips\/[^/]+\/?$/.test(t.src||"");}
 
 /* כותרת — סטטיסטיקה */
 $("#hcount").textContent=TRACKS.length;
@@ -931,7 +933,7 @@ function render(){
           ${t.ebike?'<span class="badge b-ebike">⚡ חשמלי</span>':''}
           ${t.cat==="runners"?'<span class="badge b-runner">🏃 ראנר</span>':''}
           ${t.cat==="alt"?'<span class="badge b-alt">🧭 לא-רשמי</span>':''}
-          ${t.gpx?'<span class="badge b-green">✓ GPX</span>':''}
+          ${hasGPX(t)?'<span class="badge b-green">✓ GPX</span>':''}
         </div>
         <p class="desc">${t.desc}</p>
         <div class="meta">
@@ -970,7 +972,7 @@ function openModal(t){
     <div class="head">
       <button class="close" onclick="closeModal()">✕</button>
       <h2>${t.name}</h2>
-      <div class="sub">${t.region} · ${t.type}${t.gpx?' · <b style="color:var(--accent)">✓ GPX מאומת</b>':''}</div>
+      <div class="sub">${t.region} · ${t.type}${hasGPX(t)?' · <b style="color:var(--accent)">✓ GPX זמין</b>':''}</div>
     </div>
     <div class="stats">
       <div><b>${t.km}</b><small>ק״מ</small></div>
@@ -989,10 +991,12 @@ function openModal(t){
       <div class="actions">
         ${t.gpx
           ? `<a class="btn btn-primary" target="_blank" href="${t.gpx}">📥 הורדת קובץ GPX</a>`
-          : `<a class="btn btn-primary" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>`}
-        <a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול ופרטים</a>
+          : /\/bike\/trips\/[^/]+\/?$/.test(t.src||"")
+            ? `<a class="btn btn-primary" target="_blank" href="${t.src}">📥 הורדת GPX מקק״ל</a>`
+            : `<a class="btn btn-primary" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>`}
+        <a class="btn btn-ghost" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט להתחלה</a>
       </div>
-      <p style="font-size:12.5px;margin:14px 0 0;color:var(--ink-soft)">${t.gpx?'קובץ GPX רשמי להורדה ולניווט.':'לקובץ GPX ותוואי מלא — היכנסו לדף המסלול המקורי. כפתור הניווט יוביל אתכם לנקודת ההתחלה.'}</p>
+      <p style="font-size:12.5px;margin:14px 0 0;color:var(--ink-soft)">${t.gpx?'קובץ GPX רשמי להורדה ולניווט.':/\/bike\/trips\/[^/]+\/?$/.test(t.src||"")?'בדף הקק״ל לחצו על "הורדת קובץ ניווט" לקובץ GPX רשמי ומדויק.':'לקובץ GPX ותוואי מלא — היכנסו לדף המסלול המקורי. כפתור הניווט יוביל לנקודת ההתחלה.'}</p>
       <div class="actions" style="margin-top:14px">
         <button class="btn btn-ghost" id="shareBtn">🔗 שיתוף המסלול</button>
         <button class="btn btn-ghost" id="favModalBtn">${isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים'}</button>
