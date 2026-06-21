@@ -1256,17 +1256,49 @@ function openModal(t){
       if(lbl&&row&&val){val.innerHTML=lbl.emoji+" "+lbl.txt+' <span style="color:var(--ink-soft);font-size:12px">('+m+'/100)</span>';row.style.display="";}
     }catch(e){}
   })();
-  // מפת נקודת התחלה במודאל
+  // מפת המסלול במודאל — תוואי מלא אם יש GPX, אחרת נקודת התחלה
   if(typeof L!=="undefined"){
     setTimeout(()=>{
       const el=$("#modalMap"); if(!el)return;
       const mm=L.map(el,{scrollWheelZoom:false,attributionControl:false}).setView([t.lat,t.lon],13);
       L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:17}).addTo(mm);
       const icon=L.divIcon({className:"",html:`<div class="pin ${pinClass(t.diff)}"></div>`,iconSize:[22,22],iconAnchor:[11,22]});
-      L.marker([t.lat,t.lon],{icon}).addTo(mm);
+      const startMarker=L.marker([t.lat,t.lon],{icon}).addTo(mm);
       setTimeout(()=>mm.invalidateSize(),80);
+      // ניסיון לטעון את תוואי המסלול מקובץ ה-GPX
+      drawTrackLine(t,mm,startMarker);
     },100);
   }
+}
+/* ציור תוואי המסלול על המפה מתוך נקודות ה-GPX */
+function drawTrackLine(t,mm,startMarker){
+  if(!t.localgpx || location.protocol==="file:") return;
+  try{
+    fetch(t.localgpx).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{
+      try{
+        // חילוץ נקודות מסלול: lat/lon מתוך trkpt או rtept
+        const pts=[];
+        const re=/<(?:trkpt|rtept|wpt)[^>]*\blat="([\-\d.]+)"[^>]*\blon="([\-\d.]+)"/gi;
+        let m;
+        while((m=re.exec(txt))!==null){
+          const la=parseFloat(m[1]), lo=parseFloat(m[2]);
+          if(!isNaN(la)&&!isNaN(lo)) pts.push([la,lo]);
+        }
+        if(pts.length<2) return; // אין מספיק נקודות לקו
+        // דגימה אם יש יותר מדי נקודות (לביצועים)
+        let line=pts;
+        if(pts.length>1500){const step=Math.ceil(pts.length/1500);line=pts.filter((_,i)=>i%step===0);}
+        const poly=L.polyline(line,{color:"#5dcaa5",weight:4,opacity:0.9}).addTo(mm);
+        // נקודת סיום
+        const endIcon=L.divIcon({className:"",html:'<div style="width:14px;height:14px;border-radius:50%;background:#85b7eb;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.4)"></div>',iconSize:[14,14],iconAnchor:[7,7]});
+        L.marker(line[line.length-1],{icon:endIcon}).addTo(mm).bindPopup("סיום");
+        if(startMarker)startMarker.bindPopup("התחלה");
+        // התאמת התצוגה לכל התוואי
+        mm.fitBounds(poly.getBounds(),{padding:[20,20]});
+        setTimeout(()=>mm.invalidateSize(),60);
+      }catch(e){}
+    }).catch(()=>{});
+  }catch(e){}
 }
 function closeModal(){$("#overlay").classList.remove("show");if(location.hash)history.replaceState(null,"",location.pathname);}
 
@@ -1320,11 +1352,12 @@ function shareTrack(t){
   const gpxLine=hasGPX(t)?"\n📥 קובץ GPX להורדה זמין":"";
   const ebikeLine=t.ebike?"\n⚡ מתאים גם לאופני חשמל":"";
   const season=seasonOf(t);
-  const text=`🚵 ${t.name}\n📍 ${t.region}\n\n📏 ${t.km} ק״מ · ⛰️ ${t.el} מ׳ טיפוס · 🎯 ${t.diff}\n${season.emoji} עונה מומלצת: ${season.txt}${ebikeLine}${gpxLine}\n\nכל הפרטים והניווט ב"רוכבים קבוע":`;
+  const text=`🚵 ${t.name}\n📍 ${t.region}\n\n📏 ${t.km} ק״מ · ⛰️ ${t.el} מ׳ טיפוס · 🎯 ${t.diff}\n${season.emoji} עונה מומלצת: ${season.txt}${ebikeLine}${gpxLine}\n\n👈 לחצו לכל הפרטים והניווט:\n${url}`;
   if(navigator.share){
-    navigator.share({title:t.name+" — רוכבים קבוע",text:text,url:url}).catch(()=>{});
+    // שולחים את הכל כטקסט אחד (כולל הקישור) כדי שהלינק לא "ייבלע" בוואטסאפ
+    navigator.share({title:t.name+" — רוכבים קבוע",text:text}).catch(()=>{});
   } else {
-    navigator.clipboard.writeText(text+"\n"+url).then(
+    navigator.clipboard.writeText(text).then(
       ()=>alert("✓ הקישור והפרטים הועתקו! אפשר להדביק בוואטסאפ ולשתף."),
       ()=>prompt("העתיקו את הקישור לשיתוף:",url)
     );
@@ -1474,13 +1507,34 @@ $("#viewMap").onclick=function(){
 
 render();
 
-/* פתיחת מסלול מקישור משותף (hash) */
-(function openFromHash(){
-  if(!location.hash)return;
-  const name=decodeURIComponent(location.hash.slice(1));
-  const t=TRACKS.find(x=>x.name===name);
+/* פתיחת מסלול מקישור משותף (hash) — התאמה גמישה */
+function normName(s){
+  return decodeURIComponent(s||"")
+    .replace(/[\u2013\u2014\-]/g,"-")   // מקפים שונים → מקף רגיל
+    .replace(/["'״׳`]/g,"")              // הסרת גרשיים למיניהם
+    .replace(/\s+/g," ").trim().toLowerCase();
+}
+function findTrackByHash(){
+  const raw=location.hash.slice(1);
+  if(!raw)return null;
+  let name; try{name=decodeURIComponent(raw);}catch(e){name=raw;}
+  // 1. התאמה מדויקת
+  let t=TRACKS.find(x=>x.name===name);
+  if(t)return t;
+  // 2. התאמה גמישה (מקפים/גרשיים/רווחים)
+  const target=normName(raw);
+  t=TRACKS.find(x=>normName(x.name)===target);
+  if(t)return t;
+  // 3. התאמה חלקית (אם וואטסאפ קיצר/שינה)
+  t=TRACKS.find(x=>normName(x.name).includes(target)||target.includes(normName(x.name)));
+  return t||null;
+}
+function openFromHash(){
+  const t=findTrackByHash();
   if(t)setTimeout(()=>openModal(t),300);
-})();
+}
+window.addEventListener("hashchange",openFromHash);
+openFromHash();
 
 /* ---- הזרקת Schema.org דינמי לכל המסלולים (SEO — תוצאות עשירות) ---- */
 (function injectSchema(){
