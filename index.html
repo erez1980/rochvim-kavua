@@ -16,14 +16,14 @@
 <!-- Open Graph -->
 <meta property="og:type" content="website" />
 <meta property="og:locale" content="he_IL" />
-<meta property="og:title" content="רוכבים קבוע — מאגר מסלולי השטח של ישראל" />
-<meta property="og:description" content="134 מסלולי אופני שטח וסינגלים מכל הארץ, עם סינון חכם וקובץ GPX להורדה. מותאם גם לאופני חשמל." />
+<meta property="og:title" content="רוכבים קבוע — כל הסינגלים של ישראל במקום אחד" />
+<meta property="og:description" content="144 מסלולי אופני שטח וסינגלים מכל הארץ 🚵 נתונים מלאים, דרגות קושי, פרופיל גובה, מפה אינטראקטיבית וקובץ GPX להורדה ישירה. מותאם גם לאופני חשמל." />
 <meta property="og:site_name" content="רוכבים קבוע" />
 <!-- Twitter -->
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:image" content="https://rochvim-kavuh.com/og-image.png" />
-<meta name="twitter:title" content="רוכבים קבוע — מאגר מסלולי השטח של ישראל" />
-<meta name="twitter:description" content="134 מסלולי אופני שטח וסינגלים מכל הארץ, עם סינון חכם וקובץ GPX להורדה." />
+<meta name="twitter:title" content="רוכבים קבוע — כל הסינגלים של ישראל במקום אחד" />
+<meta name="twitter:description" content="144 מסלולי אופני שטח וסינגלים מכל הארץ 🚵 נתונים מלאים, פרופיל גובה, מפה וקובץ GPX להורדה." />
 <!-- Favicon (אופניים SVG inline) -->
 <link rel="icon" type="image/svg+xml" href="favicon.svg" />
 <link rel="icon" type="image/png" href="favicon-512.png" />
@@ -37,6 +37,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;700;900&family=Assistant:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <style>
   /* ===== ברירת מחדל: כהה קולנועי ===== */
   :root{
@@ -121,6 +124,17 @@
   .hero .stat b{display:block;font-size:30px;font-weight:900;color:var(--accent)}
   .hero .stat small{color:var(--ink-soft);font-size:13px;font-weight:500}
   @keyframes rise{to{opacity:1;transform:none}}
+  /* כפתור מצא מסלולים לידי */
+  .hero-near{margin-top:30px;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;
+    background:var(--accent);color:#04211a;border:0;border-radius:999px;padding:15px 30px;
+    box-shadow:0 0 30px rgba(93,202,165,.45);transition:transform .25s,box-shadow .25s;
+    opacity:0;animation:rise .9s .55s forwards cubic-bezier(.16,1,.3,1)}
+  .hero-near:hover{transform:translateY(-3px) scale(1.04);box-shadow:0 0 42px rgba(93,202,165,.7)}
+  .hero-near.loading{opacity:.8;cursor:wait}
+  /* חשיפת כרטיסים בגלילה (scroll reveal) */
+  .card.reveal{opacity:0;transform:translateY(28px);transition:opacity .6s cubic-bezier(.16,1,.3,1),transform .6s cubic-bezier(.16,1,.3,1)}
+  .card.reveal.shown{opacity:1;transform:none}
+  @media (prefers-reduced-motion: reduce){.hero-near{animation:none;opacity:1}.card.reveal{opacity:1;transform:none}}
 
   /* layout */
   .wrap{max-width:1280px;margin:0 auto;padding:0 22px}
@@ -179,8 +193,12 @@
   .leaflet-popup-content{font-family:'Heebo',sans-serif;direction:rtl;text-align:right;margin:12px 14px}
   .leaflet-popup-content b{font-size:15px;display:block;margin-bottom:4px}
   .leaflet-popup-content .pop-meta{font-size:12px;color:#666;margin-bottom:8px}
-  .leaflet-popup-content button{font-family:inherit;background:var(--accent);color:#fff;border:0;
+  .leaflet-popup-content button{font-family:inherit;background:var(--accent);color:#04211a;border:0;
     border-radius:8px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+  /* בועות קיבוץ בגוון ירוק קולנועי */
+  .marker-cluster{background:rgba(29,158,117,.35)!important}
+  .marker-cluster div{background:rgba(15,110,86,.92)!important;color:#fff!important;font-weight:800;font-family:'Heebo',sans-serif}
+  .marker-cluster-small,.marker-cluster-medium,.marker-cluster-large{background:rgba(29,158,117,.3)!important}
   /* === רספונסיבי: פילטרים מתקפלים בנייד === */
   @media(max-width:760px){
     .filters{padding:10px 0}
@@ -198,7 +216,7 @@
   .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:22px;padding:14px 0 80px;perspective:1200px}
   .card{background:var(--surface);border:1px solid var(--glass-border);border-radius:var(--radius);overflow:hidden;
     cursor:pointer;box-shadow:var(--shadow);transition:transform .4s cubic-bezier(.16,1,.3,1),box-shadow .4s,border-color .4s;
-    display:flex;flex-direction:column;opacity:0;transform:translateY(16px);animation:rise .6s forwards;
+    display:flex;flex-direction:column;
     border-inline-start:4px solid var(--line);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
     transform-style:preserve-3d}
   .card.diff-green{border-inline-start-color:var(--green)}
@@ -227,6 +245,22 @@
   .card .meta b{color:var(--ink);font-weight:700}
   .badges{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
   .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line)}
+  /* תגית "מומלץ עכשיו" */
+  .rec-now{position:absolute;top:12px;right:14px;font-size:11px;font-weight:800;
+    background:rgba(93,202,165,.95);color:#04211a;padding:4px 10px;border-radius:999px;
+    box-shadow:0 0 16px rgba(93,202,165,.6);animation:recpulse 2.4s ease-in-out infinite;z-index:2}
+  @keyframes recpulse{0%,100%{box-shadow:0 0 12px rgba(93,202,165,.45)}50%{box-shadow:0 0 22px rgba(93,202,165,.8)}}
+  /* תגיות חכמות */
+  .smart-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+  .stag{font-size:11px;font-weight:600;padding:3px 10px;border-radius:8px;
+    background:rgba(133,183,235,.12);color:var(--ink-soft);border:1px solid var(--line)}
+  .tag-easy{background:rgba(93,202,165,.14);color:var(--accent)}
+  .tag-fam{background:rgba(133,183,235,.14);color:var(--accent-2)}
+  .tag-shade{background:rgba(29,158,117,.14);color:var(--accent)}
+  .tag-view{background:rgba(240,159,39,.14);color:#ef9f27}
+  .tag-tech{background:rgba(240,149,149,.14);color:#f09595}
+  .tag-flow{background:rgba(133,183,235,.14);color:var(--accent-2)}
+  @media (prefers-reduced-motion: reduce){.rec-now{animation:none}}
   .b-green{color:var(--green);border-color:var(--green)}
   .b-blue{color:var(--blue);border-color:var(--blue)}
   .b-red{color:var(--red);border-color:var(--red)}
@@ -252,6 +286,12 @@
   .modal .stats b{display:block;font-size:22px;font-weight:900;color:var(--accent)}
   .modal .stats small{color:var(--ink-soft);font-size:12px}
   .modal .content{padding:22px 28px 28px}
+  /* פרופיל גובה */
+  .elev-wrap{padding:16px 28px 0}
+  .elev-title{display:flex;justify-content:space-between;align-items:center;font-size:13px;
+    font-weight:700;color:var(--ink);margin-bottom:6px}
+  .elev-stats{font-size:12px;font-weight:600;color:var(--accent)}
+  #elevChart{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;overflow:hidden}
   .modal .content p{font-size:15px;color:var(--ink-soft);font-weight:300;margin-bottom:18px;line-height:1.6}
   .modal .kv{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--line);font-size:14px}
   .modal .kv span:first-child{color:var(--ink-soft)}
@@ -295,6 +335,7 @@
     <div><b id="hkm">0</b><small>ק״מ מצטבר</small></div>
     <div><b id="hebike">0</b><small>מתאימים לחשמלי</small></div>
   </div>
+  <button id="heroNear" class="hero-near" onclick="findNearMe()">📍 מצא מסלולים לידי</button>
 </header>
 
 <section class="filters">
@@ -875,6 +916,35 @@ function seasonOf(t){
   if(/ירושלים|הרים/.test(r)) return {txt:"כל השנה (נעים בקיץ)",emoji:"🌤️",hot:false};
   return {txt:"כל השנה",emoji:"🗓️",hot:false};
 }
+/* האם המסלול מומלץ לעונה הנוכחית? — לתגית "מומלץ עכשיו" */
+function recommendedNow(t){
+  const m=new Date().getMonth()+1; // 1-12
+  const summer=(m>=6&&m<=9), winter=(m>=12||m<=2);
+  const desert=/מדבר|נגב|מכתש|ערבה|אילת/.test(t.region);
+  const highland=/גולן|חרמון|גליל עליון/.test(t.region);
+  if(summer){ // קיץ: עדיף מוצל/הררי, להימנע ממדבר
+    if(desert) return false;
+    if(shadeOf(t)>=60||highland) return true;
+    return false;
+  }
+  if(winter){ // חורף: מדבר ושפלה מצוינים
+    if(desert) return true;
+    if(highland) return false; // קר/בוצי בגובה
+    return shadeOf(t)<60;
+  }
+  return true; // אביב/סתיו — הכל טוב
+}
+/* תגיות חכמות — נגזרות מהנתונים הקיימים */
+function smartTags(t){
+  const tags=[];
+  if(t.diff==="קל") tags.push({t:"מתאים למתחילים",c:"tag-easy"});
+  if(t.diff==="קל"&&t.km<=12) tags.push({t:"ידידותי למשפחות",c:"tag-fam"});
+  if(shadeOf(t)>=65) tags.push({t:"מוצל בקיץ",c:"tag-shade"});
+  if(t.diff==="אתגרי"||t.diff==="קשה") tags.push({t:"טכני",c:"tag-tech"});
+  if(/זרימה|זורם|פלואו|flow/i.test(t.desc)) tags.push({t:"זורם",c:"tag-flow"});
+  if(/תצפ|נוף|מרהיב|מטורף|פנורמ/.test(t.desc)) tags.push({t:"נוף מרהיב",c:"tag-view"});
+  return tags.slice(0,3);
+}
 function shadeOf(t){
   let s=40;
   if(t.type==="שביל יער") s=75;
@@ -952,12 +1022,13 @@ function render(){
     return;
   }
   g.innerHTML=list.map((t,i)=>`
-    <article class="card diff-${diffClass(t.diff).slice(2)}" style="animation-delay:${Math.min(i*40,400)}ms"
+    <article class="card reveal diff-${diffClass(t.diff).slice(2)}"
        data-i="${TRACKS.indexOf(t)}" tabindex="0" role="button"
        aria-label="${t.name}, ${t.region}, קושי ${t.diff}, ${t.km} קילומטר">
       <div class="top" style="background:linear-gradient(135deg,${regionVisual(t.region)[0]},${regionVisual(t.region)[1]})">
         <span class="terrain-icon">${regionVisual(t.region)[2]}</span>
         <span class="region">${t.region}</span>
+        ${recommendedNow(t)?'<span class="rec-now">✨ מומלץ עכשיו</span>':''}
         <button class="fav-btn${isFav(t.name)?' on':''}" data-fav="${t.name.replace(/"/g,'&quot;')}" aria-label="הוספה למועדפים" title="מועדפים">${isFav(t.name)?'❤️':'🤍'}</button>
       </div>
       <div class="body">
@@ -971,6 +1042,7 @@ function render(){
           ${hasGPX(t)?'<span class="badge b-green">✓ GPX</span>':''}
         </div>
         <p class="desc">${t.desc}</p>
+        ${smartTags(t).length?`<div class="smart-tags">${smartTags(t).map(tg=>`<span class="stag ${tg.c}">${tg.t}</span>`).join("")}</div>`:''}
         <div class="meta">
           <span>📏 <b>${t.km}</b> ק״מ</span>
           <span>⛰️ <b>${t.el}</b> מ׳</span>
@@ -986,7 +1058,20 @@ function render(){
   $$(".fav-btn").forEach(b=>{
     b.onclick=e=>{e.stopPropagation();toggleFav(b.dataset.fav);};
   });
+  revealCards();
   updateMap(list);
+}
+/* חשיפת כרטיסים בגלילה */
+let _revObserver=null;
+function revealCards(){
+  const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const cards=$$(".card.reveal");
+  if(reduce||!("IntersectionObserver" in window)){cards.forEach(c=>c.classList.add("shown"));return;}
+  if(_revObserver)_revObserver.disconnect();
+  _revObserver=new IntersectionObserver((entries)=>{
+    entries.forEach(en=>{if(en.isIntersecting){en.target.classList.add("shown");_revObserver.unobserve(en.target);}});
+  },{threshold:0.08,rootMargin:"0px 0px -40px 0px"});
+  cards.forEach((c,i)=>{c.style.transitionDelay=Math.min((i%12)*35,400)+"ms";_revObserver.observe(c);});
 }
 
 /* ניקוי כל הסינונים */
@@ -1013,6 +1098,10 @@ function openModal(t){
       <div><b>${t.km}</b><small>ק״מ</small></div>
       <div><b>${t.el}</b><small>מ׳ טיפוס</small></div>
       <div><b>~${time}</b><small>שעות</small></div>
+    </div>
+    <div id="elevWrap" class="elev-wrap" style="display:none">
+      <div class="elev-title"><span>📈 פרופיל גובה</span><span id="elevStats" class="elev-stats"></span></div>
+      <div id="elevChart"></div>
     </div>
     <div class="content">
       <p>${t.desc}</p>
@@ -1043,6 +1132,8 @@ function openModal(t){
   $("#favModalBtn").onclick=function(){toggleFav(t.name);this.textContent=isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים';};
   history.replaceState(null,"","#"+encodeURIComponent(t.name));
   $("#overlay").classList.add("show");
+  // פרופיל גובה מקובץ ה-GPX (אם קיים מקומית)
+  loadElevation(t);
   // מפת נקודת התחלה במודאל
   if(typeof L!=="undefined"){
     setTimeout(()=>{
@@ -1057,15 +1148,62 @@ function openModal(t){
 }
 function closeModal(){$("#overlay").classList.remove("show");if(location.hash)history.replaceState(null,"",location.pathname);}
 
+/* ---- פרופיל גובה מקובץ GPX ---- */
+function loadElevation(t){
+  const wrap=$("#elevWrap"); if(!wrap)return;
+  wrap.style.display="none";
+  // רק אם יש קובץ GPX מקומי
+  if(!t.localgpx)return;
+  // fetch של קובץ מקומי נכשל ב-file:// (פתיחה ישירה) — נדלג בשקט
+  if(location.protocol==="file:")return;
+  try{
+    fetch(t.localgpx).then(r=>r.ok?r.text():Promise.reject()).then(txt=>{
+      try{
+        const eles=[];
+        const re=/<ele>\s*([\-\d.]+)\s*<\/ele>/gi; let m;
+        while((m=re.exec(txt))!==null){const v=parseFloat(m[1]);if(!isNaN(v))eles.push(v);}
+        if(eles.length<5)return;
+        drawElevation(eles);
+        wrap.style.display="block";
+      }catch(e){wrap.style.display="none";}
+    }).catch(()=>{wrap.style.display="none";});
+  }catch(e){wrap.style.display="none";}
+}
+function drawElevation(eles){
+  // דגימה ל-~120 נקודות לחלקות
+  const N=120, step=Math.max(1,Math.floor(eles.length/N));
+  const pts=[]; for(let i=0;i<eles.length;i+=step)pts.push(eles[i]);
+  const min=Math.min(...pts), max=Math.max(...pts), range=Math.max(1,max-min);
+  // חישוב טיפוס מצטבר
+  let gain=0; for(let i=1;i<eles.length;i++){const d=eles[i]-eles[i-1];if(d>0)gain+=d;}
+  const W=620,H=120,pad=4;
+  const xs=i=>pad+(i/(pts.length-1))*(W-2*pad);
+  const ys=v=>H-pad-((v-min)/range)*(H-2*pad-14);
+  let d="M"+xs(0)+","+ys(pts[0]); pts.forEach((v,i)=>{if(i>0)d+=" L"+xs(i)+","+ys(v);});
+  const area=d+" L"+xs(pts.length-1)+","+H+" L"+xs(0)+","+H+" Z";
+  $("#elevChart").innerHTML=
+    '<svg viewBox="0 0 '+W+' '+H+'" width="100%" preserveAspectRatio="none" style="display:block">'+
+    '<defs><linearGradient id="elevg" x1="0" y1="0" x2="0" y2="1">'+
+    '<stop offset="0%" stop-color="var(--accent)" stop-opacity="0.45"/>'+
+    '<stop offset="100%" stop-color="var(--accent)" stop-opacity="0.03"/></linearGradient></defs>'+
+    '<path d="'+area+'" fill="url(#elevg)"/>'+
+    '<path d="'+d+'" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linejoin="round"/>'+
+    '</svg>';
+  $("#elevStats").textContent="↗ "+Math.round(gain)+" מ׳ · "+Math.round(min)+"–"+Math.round(max)+" מ׳";
+}
+
 /* ---- שיתוף מסלול בודד ---- */
 function shareTrack(t){
   const url=location.origin+location.pathname+"#"+encodeURIComponent(t.name);
-  const text=`${t.name} — ${t.region}\n${t.km} ק״מ · ${t.el} מ׳ טיפוס · ${t.diff}\nרוכבים קבוע:`;
+  const gpxLine=hasGPX(t)?"\n📥 קובץ GPX להורדה זמין":"";
+  const ebikeLine=t.ebike?"\n⚡ מתאים גם לאופני חשמל":"";
+  const season=seasonOf(t);
+  const text=`🚵 ${t.name}\n📍 ${t.region}\n\n📏 ${t.km} ק״מ · ⛰️ ${t.el} מ׳ טיפוס · 🎯 ${t.diff}\n${season.emoji} עונה מומלצת: ${season.txt}${ebikeLine}${gpxLine}\n\nכל הפרטים והניווט ב"רוכבים קבוע":`;
   if(navigator.share){
-    navigator.share({title:t.name,text:text,url:url}).catch(()=>{});
+    navigator.share({title:t.name+" — רוכבים קבוע",text:text,url:url}).catch(()=>{});
   } else {
-    navigator.clipboard.writeText(text+" "+url).then(
-      ()=>alert("הקישור הועתק! אפשר להדביק ולשתף."),
+    navigator.clipboard.writeText(text+"\n"+url).then(
+      ()=>alert("✓ הקישור והפרטים הועתקו! אפשר להדביק בוואטסאפ ולשתף."),
       ()=>prompt("העתיקו את הקישור לשיתוף:",url)
     );
   }
@@ -1083,15 +1221,30 @@ $("#km").oninput=e=>{state.km=+e.target.value;$("#kmval").textContent=e.target.v
 $("#el").oninput=e=>{state.el=+e.target.value;$("#elval").textContent=e.target.value;render()};
 $("#sort").onchange=e=>{
   const v=e.target.value;
-  if(v==="near"){
-    if(!navigator.geolocation){alert("הדפדפן לא תומך באיתור מיקום");e.target.value="";return;}
-    navigator.geolocation.getCurrentPosition(
-      pos=>{state.userLoc={lat:pos.coords.latitude,lon:pos.coords.longitude};state.sort="near";render();},
-      ()=>{alert("לא ניתן לאתר מיקום. ודאו שאישרתם גישה למיקום.");e.target.value="";state.sort="";render();}
-    );
-    state.sort="near";
-  } else {state.sort=v;render();}
+  if(v==="near"){ findNearMe(()=>{e.target.value="";}); }
+  else {state.sort=v;render();}
 };
+/* מצא מסלולים לידי — משותף ל-dropdown ולכפתור ה-hero */
+function findNearMe(onFail){
+  if(!navigator.geolocation){alert("הדפדפן לא תומך באיתור מיקום");onFail&&onFail();return;}
+  const hb=$("#heroNear");
+  if(hb){hb.classList.add("loading");hb.textContent="🔍 מאתר מיקום…";}
+  navigator.geolocation.getCurrentPosition(
+    pos=>{
+      state.userLoc={lat:pos.coords.latitude,lon:pos.coords.longitude};
+      state.sort="near";
+      const sel=$("#sort"); if(sel)sel.value="near";
+      if(hb){hb.classList.remove("loading");hb.textContent="📍 ממוין לפי קרבה אליך";}
+      document.querySelector(".filters").scrollIntoView({behavior:"smooth"});
+      render();
+    },
+    ()=>{
+      alert("לא ניתן לאתר מיקום. ודאו שאישרתם גישה למיקום.");
+      if(hb){hb.classList.remove("loading");hb.textContent="📍 מצא מסלולים לידי";}
+      onFail&&onFail();
+    }
+  );
+}
 $("#viewFav").onclick=function(){
   state.favOnly=!state.favOnly;
   this.classList.toggle("on",state.favOnly);
@@ -1143,7 +1296,16 @@ function initMap(){
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{
     maxZoom:18, attribution:'© OpenStreetMap'
   }).addTo(map);
-  markersLayer=L.layerGroup().addTo(map);
+  // קיבוץ פינים אם הספרייה נטענה, אחרת שכבה רגילה (fallback בטוח)
+  if(typeof L.markerClusterGroup==="function"){
+    markersLayer=L.markerClusterGroup({
+      maxClusterRadius:50, spiderfyOnMaxZoom:true, showCoverageOnHover:false,
+      chunkedLoading:true
+    });
+    map.addLayer(markersLayer);
+  } else {
+    markersLayer=L.layerGroup().addTo(map);
+  }
   mapReady=true;
   updateMap(filtered());
 }
