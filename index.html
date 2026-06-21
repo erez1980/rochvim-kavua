@@ -199,6 +199,8 @@
   body.map-view .grid{display:none}
   body.map-view .map-main{display:block}
   .map-modal{height:200px;width:100%;border-radius:14px;overflow:hidden;margin:16px 0 0;border:1px solid var(--line)}
+  .oneway-note{margin:12px 0 0;padding:10px 14px;border-radius:12px;font-size:13.5px;font-weight:600;
+    background:rgba(240,159,39,.12);color:#ef9f27;border:1px solid rgba(240,159,39,.3);line-height:1.5}
   /* סיכות צבועות לפי קושי */
   .pin{width:22px;height:22px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);
     border:2.5px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.4)}
@@ -1234,7 +1236,8 @@ function openModal(t){
       <div class="kv"><span>צל במסלול</span><span>${shadeLabel(shadeOf(t))} (${shadeOf(t)}%)</span></div>
       <div class="kv"><span>מתאים לאופני חשמל</span><span>${t.ebike?'✅ כן':'⚠️ פחות מומלץ'}</span></div>
       <div class="kv"><span>נקודת התחלה</span><span>${t.lat.toFixed(4)}, ${t.lon.toFixed(4)}</span></div>
-      <div id="modalMap" class="map-modal" aria-label="מפת נקודת ההתחלה"></div>
+      ${(t.dir==="חד-כיווני"||t.dir==="נקודה לנקודה")?`<div class="oneway-note">⚠️ מסלול ${t.dir} — אינו חוזר לנקודת ההתחלה. כדאי לתכנן איסוף מנקודת הסיום או רכב שני.</div>`:''}
+      <div id="modalMap" class="map-modal" aria-label="מפת המסלול"></div>
       <div class="actions">
         ${t.localgpx
           ? `<a class="btn btn-primary" href="${t.localgpx}" download>📥 הורדת קובץ GPX</a>`
@@ -1244,6 +1247,8 @@ function openModal(t){
             ? `<a class="btn btn-primary" target="_blank" href="${t.src}">📥 הורדת GPX מקק״ל</a>`
             : `<a class="btn btn-primary" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>`}
         <a class="btn btn-ghost" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט להתחלה</a>
+        <a class="btn btn-ghost" id="navEndBtn" target="_blank" href="#" style="display:none">🏁 ניווט לנקודת הסיום</a>
+        ${t.src?`<a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול המקורי</a>`:''}
       </div>
       <p style="font-size:12.5px;margin:14px 0 0;color:var(--ink-soft)">${(t.localgpx||t.gpx)?'קובץ GPX רשמי להורדה ולניווט.':/\/bike\/trips\/[^/]+\/?$/.test(t.src||"")?'בדף הקק״ל לחצו על "הורדת קובץ ניווט" לקובץ GPX רשמי ומדויק.':'לקובץ GPX ותוואי מלא — היכנסו לדף המסלול המקורי. כפתור הניווט יוביל לנקודת ההתחלה.'}</p>
       <div class="actions" style="margin-top:14px">
@@ -1298,9 +1303,18 @@ function drawTrackLine(t,mm,startMarker){
         if(pts.length>1500){const step=Math.ceil(pts.length/1500);line=pts.filter((_,i)=>i%step===0);}
         const poly=L.polyline(line,{color:"#5dcaa5",weight:4,opacity:0.9}).addTo(mm);
         // נקודת סיום
+        const endPt=line[line.length-1];
         const endIcon=L.divIcon({className:"",html:'<div style="width:14px;height:14px;border-radius:50%;background:#85b7eb;border:2px solid #fff;box-shadow:0 0 6px rgba(0,0,0,.4)"></div>',iconSize:[14,14],iconAnchor:[7,7]});
-        L.marker(line[line.length-1],{icon:endIcon}).addTo(mm).bindPopup("סיום");
+        L.marker(endPt,{icon:endIcon}).addTo(mm).bindPopup("סיום");
         if(startMarker)startMarker.bindPopup("התחלה");
+        // למסלול חד-כיווני — הפעלת כפתור ניווט לנקודת הסיום
+        if(t.dir==="חד-כיווני"||t.dir==="נקודה לנקודה"){
+          const endBtn=$("#navEndBtn");
+          if(endBtn){
+            endBtn.href="https://www.google.com/maps/dir/?api=1&destination="+endPt[0]+","+endPt[1];
+            endBtn.style.display="";
+          }
+        }
         // התאמת התצוגה לכל התוואי
         mm.fitBounds(poly.getBounds(),{padding:[20,20]});
         setTimeout(()=>mm.invalidateSize(),60);
