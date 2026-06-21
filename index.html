@@ -261,6 +261,10 @@
   .tag-tech{background:rgba(240,149,149,.14);color:#f09595}
   .tag-flow{background:rgba(133,183,235,.14);color:var(--accent-2)}
   @media (prefers-reduced-motion: reduce){.rec-now{animation:none}}
+  .mud-badge{font-weight:700;border:1px solid var(--line)}
+  .mud-dry{color:#5dcaa5;border-color:rgba(93,202,165,.5)}
+  .mud-part{color:#ef9f27;border-color:rgba(240,159,39,.5)}
+  .mud-wet{color:#f09595;border-color:rgba(240,149,149,.5)}
   .b-green{color:var(--green);border-color:var(--green)}
   .b-blue{color:var(--blue);border-color:var(--blue)}
   .b-red{color:var(--red);border-color:var(--red)}
@@ -380,6 +384,18 @@
         <span class="chip" data-diff="אתגרי"><span class="dot" style="background:var(--ink)"></span>אתגרי</span>
         <span class="chip" id="ebikeChip">⚡ מתאים לחשמלי</span>
         <span class="chip" id="gpxChip">📥 יש GPX להורדה</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span style="font-size:13px;color:var(--ink-soft);font-weight:500">גילוי:</span>
+        <select id="timeCat" aria-label="כמה זמן יש לי">
+          <option value="">⏱️ כמה זמן יש לי?</option>
+          <option value="short">עד שעה וחצי</option>
+          <option value="half">חצי יום</option>
+          <option value="full">יום שלם</option>
+        </select>
+        <span class="chip" id="summerChip">☀️ מתאים לקיץ</span>
+        <span class="chip" id="waterChip">💧 מים/רחצה בסוף</span>
+        <span class="chip" id="attractionChip">📸 אטרקציה בדרך</span>
       </div>
       <div class="sliders">
         <div class="slider">
@@ -867,7 +883,7 @@ const TRACKS = [
 ];
 
 /* ---- מצב ---- */
-const state={q:"",region:"",type:"",cat:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:"",favOnly:false,gpxOnly:false,userLoc:null};
+const state={q:"",region:"",type:"",cat:"",dir:"",diffs:new Set(),ebike:false,km:120,el:1500,sort:"",favOnly:false,gpxOnly:false,timeCat:"",summer:false,water:false,attraction:false,userLoc:null};
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 
 /* ---- מועדפים (localStorage) ---- */
@@ -945,6 +961,68 @@ function smartTags(t){
   if(/תצפ|נוף|מרהיב|מטורף|פנורמ/.test(t.desc)) tags.push({t:"נוף מרהיב",c:"tag-view"});
   return tags.slice(0,3);
 }
+
+/* ===== תכונות גילוי נגזרות (אוטומטי מהנתונים) ===== */
+function rideHours(t){ return t.km/12 + t.el/400; }
+function timeCategory(t){
+  const h=rideHours(t);
+  if(h<=1.5) return "short";
+  if(h<=3.5) return "half";
+  return "full";
+}
+function summerFriendly(t){
+  if(shadeOf(t)>=60) return true;
+  if(/גולן|חרמון|גליל עליון|ירושלים|הרים/.test(t.region)) return true;
+  return false;
+}
+function hasWater(t){
+  return /רחצ|בריכ|מעיין|מעיינות|מפל|אגם|חוף רחצה|שכשוך|גב מים|בריכת|טבילה/.test(t.desc||"");
+}
+function hasAttraction(t){
+  return /יקב|תצפית|מצפה|אתר|חורבת|חורבות|מערה|מערות|ארכיאולוג|מבצר|מנזר|גשר|תל |פארק|שמורה|מוזיאון/.test(t.desc||"");
+}
+
+/* ===== מדד בוץ בלייב (Open-Meteo) ===== */
+function soilDrainage(t){
+  const r=t.region||"", d=t.desc||"";
+  if(/חוואר|חמרה|בוץ|טין|לס/.test(d)) return 0.5;
+  if(/מדבר|נגב|מכתש|ערבה|אילת/.test(r)) return 1.6;
+  if(/חולי|חול|דיונה/.test(d)) return 1.5;
+  if(/סלע|סלעי|כורכר|בזלת/.test(d)) return 1.3;
+  if(/גולן/.test(r)) return 0.7;
+  if(/שפלה|מרכז|שרון/.test(r)) return 0.75;
+  if(/יער|חורש/.test(d)) return 0.9;
+  return 1.0;
+}
+const _rainCache={};
+async function fetchRegionRain(lat,lon){
+  const key=lat.toFixed(1)+","+lon.toFixed(1);
+  if(_rainCache[key]!==undefined) return _rainCache[key];
+  try{
+    const url="https://api.open-meteo.com/v1/forecast?latitude="+lat+"&longitude="+lon+
+      "&daily=precipitation_sum&past_days=7&forecast_days=1&timezone=auto";
+    const r=await fetch(url);
+    if(!r.ok) throw 0;
+    const j=await r.json();
+    const arr=(j.daily&&j.daily.precipitation_sum)||[];
+    let score=0; const n=arr.length;
+    arr.forEach((mm,i)=>{ if(typeof mm==="number"){ score+=mm*((i+1)/n); } });
+    _rainCache[key]=score;
+    return score;
+  }catch(e){ _rainCache[key]=null; return null; }
+}
+async function mudIndex(t){
+  const rain=await fetchRegionRain(t.lat,t.lon);
+  if(rain===null) return null;
+  let mud=Math.round((rain/soilDrainage(t))*4.5);
+  return Math.max(0,Math.min(100,mud));
+}
+function mudLabel(m){
+  if(m===null) return null;
+  if(m<20) return {txt:"יבש",emoji:"🟢",c:"mud-dry"};
+  if(m<50) return {txt:"לח חלקית",emoji:"🟡",c:"mud-part"};
+  return {txt:"בוצי",emoji:"🔴",c:"mud-wet"};
+}
 function shadeOf(t){
   let s=40;
   if(t.type==="שביל יער") s=75;
@@ -976,6 +1054,10 @@ function filtered(){
     if(state.diffs.size&&!state.diffs.has(t.diff))return false;
     if(state.ebike&&!t.ebike)return false;
     if(state.gpxOnly&&!hasGPX(t))return false;
+    if(state.timeCat&&timeCategory(t)!==state.timeCat)return false;
+    if(state.summer&&!summerFriendly(t))return false;
+    if(state.water&&!hasWater(t))return false;
+    if(state.attraction&&!hasAttraction(t))return false;
     if(t.km>state.km)return false;
     if(t.el>state.el)return false;
     if(state.favOnly&&!isFav(t.name))return false;
@@ -996,12 +1078,13 @@ function filtered(){
 
 /* האם יש סינון פעיל כלשהו */
 function anyActive(){
-  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly||state.gpxOnly;
+  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly||state.gpxOnly||state.timeCat||state.summer||state.water||state.attraction;
 }
 function activeCount(){
   let n=0;
   if(state.region)n++; if(state.type)n++; if(state.cat)n++; if(state.dir)n++; if(state.sort)n++;
   n+=state.diffs.size; if(state.ebike)n++; if(state.favOnly)n++; if(state.gpxOnly)n++;
+  if(state.timeCat)n++; if(state.summer)n++; if(state.water)n++; if(state.attraction)n++;
   if(state.km<120)n++; if(state.el<1500)n++;
   return n;
 }
@@ -1040,6 +1123,7 @@ function render(){
           ${t.cat==="runners"?'<span class="badge b-runner">🏃 ראנר</span>':''}
           ${t.cat==="alt"?'<span class="badge b-alt">🧭 לא-רשמי</span>':''}
           ${hasGPX(t)?'<span class="badge b-green">✓ GPX</span>':''}
+          <span class="badge mud-badge" data-mud="${TRACKS.indexOf(t)}" style="display:none"></span>
         </div>
         <p class="desc">${t.desc}</p>
         ${smartTags(t).length?`<div class="smart-tags">${smartTags(t).map(tg=>`<span class="stag ${tg.c}">${tg.t}</span>`).join("")}</div>`:''}
@@ -1059,10 +1143,21 @@ function render(){
     b.onclick=e=>{e.stopPropagation();toggleFav(b.dataset.fav);};
   });
   revealCards();
+  fillMudBadges();
   updateMap(list);
 }
 /* חשיפת כרטיסים בגלילה */
 let _revObserver=null;
+async function fillMudBadges(){
+  const badges=$$(".mud-badge");
+  for(const el of badges){
+    const t=TRACKS[+el.dataset.mud]; if(!t)continue;
+    try{
+      const m=await mudIndex(t); const lbl=mudLabel(m);
+      if(lbl){el.textContent=lbl.emoji+" "+lbl.txt;el.className="badge mud-badge "+lbl.c;el.style.display="";}
+    }catch(e){}
+  }
+}
 function revealCards(){
   const reduce=window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const cards=$$(".card.reveal");
@@ -1078,7 +1173,9 @@ function revealCards(){
 function clearAll(){
   state.q="";state.region="";state.type="";state.cat="";state.dir="";state.diffs.clear();
   state.ebike=false;state.km=120;state.el=1500;state.sort="";state.favOnly=false;state.gpxOnly=false;
+  state.timeCat="";state.summer=false;state.water=false;state.attraction=false;
   $("#q").value="";$("#region").value="";$("#type").value="";$("#cat").value="";$("#dir").value="";$("#sort").value="";
+  {const tc=$("#timeCat"); if(tc)tc.value="";}
   $("#km").value=120;$("#kmval").textContent=120;$("#el").value=1500;$("#elval").textContent=1500;
   $$(".chip").forEach(c=>c.classList.remove("on"));
   $("#viewFav").classList.remove("on");$("#viewFav").setAttribute("aria-pressed","false");
@@ -1108,6 +1205,7 @@ function openModal(t){
       <div class="kv"><span>דרגת קושי</span><span>${t.diff}</span></div>
       <div class="kv"><span>כיווניות</span><span>${t.dir}</span></div>
       <div class="kv"><span>עונה מומלצת</span><span>${seasonOf(t).emoji} ${seasonOf(t).txt}</span></div>
+      <div class="kv" id="mudRow" style="display:none"><span>מצב בוץ (בלייב) 🌧️</span><span id="mudVal">בודק…</span></div>
       <div class="kv"><span>צל במסלול</span><span>${shadeLabel(shadeOf(t))} (${shadeOf(t)}%)</span></div>
       <div class="kv"><span>מתאים לאופני חשמל</span><span>${t.ebike?'✅ כן':'⚠️ פחות מומלץ'}</span></div>
       <div class="kv"><span>נקודת התחלה</span><span>${t.lat.toFixed(4)}, ${t.lon.toFixed(4)}</span></div>
@@ -1134,6 +1232,13 @@ function openModal(t){
   $("#overlay").classList.add("show");
   // פרופיל גובה מקובץ ה-GPX (אם קיים מקומית)
   loadElevation(t);
+  (async()=>{
+    try{
+      const m=await mudIndex(t); const lbl=mudLabel(m);
+      const row=$("#mudRow"), val=$("#mudVal");
+      if(lbl&&row&&val){val.innerHTML=lbl.emoji+" "+lbl.txt+' <span style="color:var(--ink-soft);font-size:12px">('+m+'/100)</span>';row.style.display="";}
+    }catch(e){}
+  })();
   // מפת נקודת התחלה במודאל
   if(typeof L!=="undefined"){
     setTimeout(()=>{
@@ -1277,6 +1382,19 @@ const gpxc=$("#gpxChip");gpxc.setAttribute("role","button");gpxc.setAttribute("t
 const gpxToggle=function(){state.gpxOnly=!state.gpxOnly;gpxc.classList.toggle("on",state.gpxOnly);render()};
 gpxc.onclick=gpxToggle;
 gpxc.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();gpxToggle()}};
+
+/* סינוני גילוי */
+$("#timeCat").onchange=e=>{state.timeCat=e.target.value;render();};
+function wireChip(id,key){
+  const c=$(id); if(!c)return;
+  c.setAttribute("role","button");c.setAttribute("tabindex","0");
+  const tog=()=>{state[key]=!state[key];c.classList.toggle("on",state[key]);render();};
+  c.onclick=tog;
+  c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();tog()}};
+}
+wireChip("#summerChip","summer");
+wireChip("#waterChip","water");
+wireChip("#attractionChip","attraction");
 
 /* ---- מצב תצוגה בהיר/כהה (ברירת מחדל: כהה קולנועי) ---- */
 (function(){
