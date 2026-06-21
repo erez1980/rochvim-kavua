@@ -1236,7 +1236,7 @@ function openModal(t){
       <div class="kv"><span>צל במסלול</span><span>${shadeLabel(shadeOf(t))} (${shadeOf(t)}%)</span></div>
       <div class="kv"><span>מתאים לאופני חשמל</span><span>${t.ebike?'✅ כן':'⚠️ פחות מומלץ'}</span></div>
       <div class="kv"><span>נקודת התחלה</span><span>${t.lat.toFixed(4)}, ${t.lon.toFixed(4)}</span></div>
-      ${(t.dir==="חד-כיווני"||t.dir==="נקודה לנקודה")?`<div class="oneway-note">⚠️ מסלול ${t.dir} — אינו חוזר לנקודת ההתחלה. כדאי לתכנן איסוף מנקודת הסיום או רכב שני.</div>`:''}
+      ${(t.dir==="חד-כיווני"||t.dir==="נקודה לנקודה")?`<div class="oneway-note">⚠️ מסלול ${t.dir} — אינו חוזר לנקודת ההתחלה. ${(t.localgpx||t.gpx)?'נקודת הסיום מסומנת על המפה, וכפתור ניווט אליה זמין למטה.':'כדאי לתכנן איסוף או רכב שני — נקודת הסיום המדויקת זמינה בקובץ ה-GPX בדף המסלול המקורי.'}</div>`:''}
       <div id="modalMap" class="map-modal" aria-label="מפת המסלול"></div>
       <div class="actions">
         ${t.localgpx
@@ -1245,8 +1245,8 @@ function openModal(t){
           ? `<a class="btn btn-primary" target="_blank" href="${t.gpx}">📥 הורדת קובץ GPX</a>`
           : /\/bike\/trips\/[^/]+\/?$/.test(t.src||"")
             ? `<a class="btn btn-primary" target="_blank" href="${t.src}">📥 הורדת GPX מקק״ל</a>`
-            : `<a class="btn btn-primary" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>`}
-        <a class="btn btn-ghost" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט להתחלה</a>
+            : ``}
+        <a class="btn ${(t.localgpx||t.gpx||/\/bike\/trips\/[^/]+\/?$/.test(t.src||""))?'btn-ghost':'btn-primary'}" target="_blank" href="https://www.google.com/maps/dir/?api=1&destination=${t.lat},${t.lon}">🧭 ניווט לתחילת המסלול</a>
         <a class="btn btn-ghost" id="navEndBtn" target="_blank" href="#" style="display:none">🏁 ניווט לנקודת הסיום</a>
         ${t.src?`<a class="btn btn-ghost" target="_blank" href="${t.src}">🔗 דף המסלול המקורי</a>`:''}
       </div>
