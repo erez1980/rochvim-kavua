@@ -1,4 +1,15 @@
+# רוכבים קבוע — מאגר מסלולי השטח של ישראל
 User-agent: *
+Allow: /
+
+# מנועי חיפוש מרכזיים — גישה מלאה
+User-agent: Googlebot
+Allow: /
+
+User-agent: Googlebot-Image
+Allow: /
+
+User-agent: Bingbot
 Allow: /
 
 Sitemap: https://rochvim-kavuh.com/sitemap.xml

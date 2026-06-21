@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ניהול GPX — רוכבים קבוע</title>
+<style>
+  :root{--accent:#0a7d4d;--accent2:#0071e3;--ink:#1d1d1f;--soft:#6e6e73;--line:#e5e5ea;--bg:#f5f5f7;--ok:#0a7d4d;--miss:#c2410c;--err:#c00}
+  *{box-sizing:border-box}
+  body{font-family:'Heebo','Assistant',Arial,sans-serif;margin:0;background:var(--bg);color:var(--ink);line-height:1.5}
+  header{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;padding:20px}
+  header h1{margin:0;font-size:21px} header p{margin:4px 0 0;font-size:13px;opacity:.9}
+  .wrap{max-width:900px;margin:0 auto;padding:18px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-bottom:16px}
+  .card h3{margin:0 0 10px;font-size:15px}
+  label{font-size:13px;font-weight:600;display:block;margin-bottom:4px}
+  input[type=password],input[type=text],input[type=search],select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font:inherit}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:end} .row>div{flex:1;min-width:160px}
+  button{font:inherit;font-weight:700;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:10px 18px;cursor:pointer}
+  button:hover{opacity:.92} button.ghost{background:#fff;color:var(--accent);border:1px solid var(--accent)}
+  .status{font-size:13px;padding:8px 12px;border-radius:8px;margin-top:10px;display:none}
+  .status.ok{background:#0a7d4d14;color:var(--ok);display:block}
+  .status.err{background:#c0000014;color:var(--err);display:block}
+  .status.info{background:#0071e314;color:var(--accent2);display:block}
+  .bar{display:flex;gap:10px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
+  .bar input[type=search]{flex:1;min-width:180px} .bar select{max-width:200px}
+  .stat{font-size:13px;color:var(--soft)} .stat b{color:var(--ink)}
+  .track{background:#fff;border:1px solid var(--line);border-radius:12px;padding:11px 14px;margin-bottom:7px;display:flex;align-items:center;gap:12px;transition:.15s}
+  .track.has{border-inline-start:4px solid var(--ok)} .track.miss{border-inline-start:4px solid var(--miss)}
+  .track.dragover{background:#eafaf1;border-color:var(--accent)} .track.uploading{opacity:.6}
+  .track .info{flex:1;min-width:0} .track .name{font-weight:700;font-size:14px} .track .meta{font-size:12px;color:var(--soft)}
+  .badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap}
+  .b-has{background:#0a7d4d14;color:var(--ok)} .b-miss{background:#c2410c14;color:var(--miss)}
+  .drop{font-size:12px;color:var(--accent);border:1.5px dashed var(--accent);border-radius:8px;padding:6px 12px;cursor:pointer;white-space:nowrap}
+  .drop:hover{background:#eafaf1} .hide{display:none}
+  code{background:#f0f0f3;padding:1px 5px;border-radius:4px;font-size:12px}
+  details{font-size:13px;margin-top:8px} summary{cursor:pointer;font-weight:600;color:var(--accent)}
+  details ol{margin:8px 0;padding-inline-start:20px} details li{margin-bottom:4px}
+</style>
+</head>
+<body>
+<header>
+  <h1>🚵 ניהול GPX — רוכבים קבוע</h1>
+  <p>כלי פרטי. מעלה קבצי GPX/KML/KMZ ישירות ל-GitHub ומעדכן את המסלול. רק עבורך.</p>
+</header>
+<div class="wrap">
+  <div class="card" id="authCard">
+    <h3>🔑 התחברות ל-GitHub</h3>
+    <div class="row">
+      <div><label>GitHub Personal Access Token</label>
+        <input type="password" id="token" placeholder="ghp_… או github_pat_…" autocomplete="off"></div>
+      <div style="flex:0"><button onclick="saveToken()">התחבר</button></div>
+    </div>
+    <div class="status" id="authStatus"></div>
+    <details><summary>איך יוצרים Token? (פעם אחת)</summary>
+      <ol>
+        <li>github.com ← Settings ← Developer settings ← Personal access tokens ← <b>Fine-grained tokens</b></li>
+        <li>Generate new token. תן שם (למשל "rochvim admin").</li>
+        <li><b>Repository access</b> ← <b>Only select repositories</b> ← <code>rochvim-kavua</code></li>
+        <li><b>Permissions ← Repository ← Contents</b> ← <b>Read and write</b></li>
+        <li>Generate, העתק את ה-Token, הדבק כאן.</li>
+      </ol>
+      <p>ה-Token נשמר רק בדפדפן הזה (localStorage), נשלח רק ל-GitHub, ולא נכנס לקוד.</p>
+    </details>
+  </div>
+  <div class="card hide" id="mainCard">
+    <div class="bar">
+      <input type="search" id="q" placeholder="חיפוש מסלול…">
+      <select id="filter">
+        <option value="all">כל המסלולים</option>
+        <option value="miss" selected>חסרי GPX בלבד</option>
+        <option value="has">יש GPX בלבד</option>
+      </select>
+      <span class="stat" id="stat"></span>
+      <button class="ghost" style="padding:8px 12px;font-size:13px" onclick="logout()">התנתק</button>
+    </div>
+    <div class="status" id="opStatus"></div>
+    <div id="list"></div>
+  </div>
+</div>
+<script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
+<script>
+const REPO="erez1980/rochvim-kavua", BRANCH="main", GPX_DIR="gpx";
+let TOKEN="", TRACKS=[];
+TRACKS = [{"name": "סינגל הרצל — יער בן שמן", "region": "מרכז / שפלה", "hasGpx": false}, {"name": "סינגל ענבה — יער בן שמן", "region": "מרכז / שפלה", "hasGpx": true}, {"name": "סינגל חדיד — יער בן שמן", "region": "מרכז / שפלה", "hasGpx": false}, {"name": "סינגל עינב — פארק בריטניה", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל חרובית", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל עדולם", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל האלה", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל הגלבוע", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סינגל רוחמה–דורות", "region": "דרום / נגב צפוני", "hasGpx": false}, {"name": "סינגל הבשור", "region": "נגב מערבי", "hasGpx": false}, {"name": "דרך הסוכר (קלאסי)", "region": "מדבר יהודה", "hasGpx": false}, {"name": "דרך הסוכר (ארוך)", "region": "מדבר יהודה", "hasGpx": false}, {"name": "סינגל רחמים (ערד)", "region": "מדבר יהודה", "hasGpx": false}, {"name": "חריץ בחוואר", "region": "מדבר יהודה", "hasGpx": false}, {"name": "נחל פרצים", "region": "מדבר יהודה", "hasGpx": false}, {"name": "סינגל ביריה", "region": "גליל עליון", "hasGpx": false}, {"name": "רוכב הגולן (שביל הגולן)", "region": "רמת הגולן", "hasGpx": false}, {"name": "חצבני, ירדן ובניאס", "region": "גליל עליון", "hasGpx": false}, {"name": "דרך הפטרולים (גלבוע)", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סובב נחל יששכר", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "במורד נחל תבור", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "פארק המעיינות", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סינגל הסוללים", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל בית קשת", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל כברי", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל הרי נפתלי", "region": "גליל עליון", "hasGpx": false}, {"name": "סינגל יער שוויץ", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "סינגלים בכרמל — אונ׳ חיפה", "region": "כרמל", "hasGpx": false}, {"name": "סינגלים בחניון יגור", "region": "כרמל", "hasGpx": false}, {"name": "סינגלי שדה בוקר", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל חווארי אלמוג", "region": "מדבר יהודה", "hasGpx": false}, {"name": "סינגל בארי — האדום (סובב בארי)", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל בארי — הכחול", "region": "נגב מערבי", "hasGpx": false}, {"name": "ממלכת הסינגלים — פארק בריטניה", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל אלון — יער להב", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל רימון — יער להב כרמים", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל יער שגב (משגב)", "region": "גליל תחתון", "hasGpx": false}, {"name": "שבילי אנדורו יער שגב", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל יער חניתה", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל מצובה", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל יחיעם", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל יער אחיהוד", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל יער קריית אתא", "region": "חיפה והקריות", "hasGpx": false}, {"name": "סינגל יער שווייץ (קק״ל)", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "סינגל יער טורען", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל יער לביא", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל יער ביריה ומצוקי דלתון", "region": "גליל עליון", "hasGpx": false}, {"name": "סינגל יער צה״ל — כרמיאל", "region": "גליל מערבי", "hasGpx": false}, {"name": "סינגל יער גבעת המורה", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סינגל רום הגלבוע", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סינגל מרום גולן — בשבילם", "region": "רמת הגולן", "hasGpx": false}, {"name": "שביל אופניים קצרין", "region": "רמת הגולן", "hasGpx": false}, {"name": "שביל אופניים פארק הירדן", "region": "גליל / כנרת", "hasGpx": false}, {"name": "סינגל נחל לימונים (הבעש״ט)", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגלים בפארק קנדה (איילון)", "region": "מרכז / שפלה", "hasGpx": false}, {"name": "שביל האופניים השופט–גחר", "region": "רמות מנשה", "hasGpx": false}, {"name": "סינגל יער חוף הכרמל", "region": "כרמל", "hasGpx": false}, {"name": "סינגלי יער חגית ובת שלמה", "region": "כרמל / רמות מנשה", "hasGpx": false}, {"name": "שבילי אופניים יער הקדושים", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל עין ראפה", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל עין קובי", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל זכריה", "region": "שפלת יהודה", "hasGpx": false}, {"name": "שביל אופניים עדולם", "region": "שפלת יהודה", "hasGpx": false}, {"name": "סינגל אסף — כיסופים", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל סובב יער מיתר", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל פארק שרשרת — בתרונות גרר", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל ניר משה", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגלים בפארק תמנע", "region": "ערבה / אילת", "hasGpx": false}, {"name": "סינגל יער קהילתי שוהם", "region": "מרכז / שפלה", "hasGpx": false}, {"name": "סינגל סובב הר גילון", "region": "גליל מערבי", "hasGpx": false}, {"name": "שביל הרכסים (IMBA)", "region": "כרמל / רמות מנשה", "hasGpx": false}, {"name": "מסלולי אנדורו יער שוויץ", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "שביל ישראל לאופניים — מצפה רמון לחאן בארות", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגלי מצפה רמון (מרחב השראה)", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל נחל חווה ופארק הפיסול", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל עבדת–שדה בוקר", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל בור חמת", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל שביל ישראל — ערד למצדה", "region": "מדבר יהודה", "hasGpx": false}, {"name": "סינגל דימונה", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "סינגל חורשן (E-MTB)", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל יטבתה–תמנע", "region": "ערבה / אילת", "hasGpx": false}, {"name": "סינגל נחל בוסתן", "region": "כרמל", "hasGpx": true}, {"name": "סינגל אלון הגליל", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל ריש לקיש", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל הושעיה", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים שמשית", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים תמרת", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים גבעת אלה", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים הסוללים", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים אלון הגליל (קהילתי)", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל פלוגות", "region": "דרום / נגב צפוני", "hasGpx": false}, {"name": "שביל אופניים יער גברעם", "region": "דרום / נגב צפוני", "hasGpx": false}, {"name": "שביל אופניים יער קהילתי שוקדה", "region": "נגב מערבי", "hasGpx": false}, {"name": "שביל אופניים ניר משה (סובב)", "region": "נגב מערבי", "hasGpx": false}, {"name": "שביל אופניים נחל שמריה — סובב אופקים", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל חזון", "region": "גליל עליון", "hasGpx": false}, {"name": "סינגל המוביל (חנתון)", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל גבעת חציר", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל כרמים", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל רימון — להב (כרמים)", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל יער הבעש״ט / נחל לימונים", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל כפר החורש — יפיע", "region": "גליל תחתון", "hasGpx": false}, {"name": "סינגל כפר חנניה — ענבר", "region": "גליל עליון", "hasGpx": false}, {"name": "סינגל משואה", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "סינגל פאמפטרק אלון הגליל", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים גבעת אלה", "region": "גליל תחתון", "hasGpx": false}, {"name": "שביל אופניים קנים", "region": "שרון", "hasGpx": false}, {"name": "שביל אופניים מעלה נחל אלכסנדר", "region": "שרון", "hasGpx": false}, {"name": "סינגלים ביער חורשים", "region": "שרון", "hasGpx": false}, {"name": "סינגל כרם מהר״ל — נחל מערות", "region": "כרמל", "hasGpx": false}, {"name": "סינגל השלוחה", "region": "כרמל", "hasGpx": false}, {"name": "סינגל גוש עציון", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל יער יד מרדכי", "region": "דרום / נגב צפוני", "hasGpx": false}, {"name": "סינגל גוש עציון (5 המעיינות)", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל המעיינות גוש עציון", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל טלמונים", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל חורש טלמונים", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל נחל קטלב (הסטף)", "region": "ירושלים והרים", "hasGpx": false}, {"name": "סינגל ואדי קלט", "region": "מדבר יהודה", "hasGpx": false}, {"name": "שביל אופניים כוכב יאיר–צור יגאל", "region": "שרון", "hasGpx": false}, {"name": "סינגל יער קהילתי שוקדה (כחול)", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל אבו-חוף", "region": "נגב צפוני", "hasGpx": false}, {"name": "סינגל יער עירון", "region": "כרמל / רמות מנשה", "hasGpx": false}, {"name": "סינגל הזורע–נחל השופט", "region": "רמות מנשה", "hasGpx": false}, {"name": "סינגל סובב טבעון", "region": "גלבוע ועמקים", "hasGpx": false}, {"name": "שביל הגולן — מנמרוד לעין זיוון", "region": "רמת הגולן", "hasGpx": false}, {"name": "רוכב הגולן — דרום (דליות לאון)", "region": "רמת הגולן", "hasGpx": false}, {"name": "סינגל הר אודם–עין זיוון", "region": "רמת הגולן", "hasGpx": false}, {"name": "מלך הצפון — מג׳דל שמס", "region": "רמת הגולן", "hasGpx": false}, {"name": "מרום גולן–אורטל–אלוני הבשן", "region": "רמת הגולן", "hasGpx": false}, {"name": "מסלול גדות (גליל עליון)", "region": "גליל עליון", "hasGpx": false}, {"name": "בניאס–צומת רוויה", "region": "גליל עליון", "hasGpx": false}, {"name": "סינגל אנדורו יער שגב (ארוך)", "region": "גליל תחתון", "hasGpx": false}, {"name": "חמשוש מצפה רמון (פסלים-חווה-שב״י)", "region": "נגב / מכתשים", "hasGpx": false}, {"name": "טבריוס (Tiberius) — יער שווייץ", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "ברניקי בלוז מלא — יער שווייץ", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "טבריוס עליון + ברניקי תחתון", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "מסלולי אנדורו יער שווייץ (DH)", "region": "גליל תחתון / כנרת", "hasGpx": false}, {"name": "ירידת הר מירון (עין ערבות–חניון מירון)", "region": "גליל עליון", "hasGpx": false}, {"name": "סכיני ערד / סינגל הר פרסה", "region": "מדבר יהודה", "hasGpx": false}, {"name": "סינגל נחל בוקק (אלטרנטיבי)", "region": "מדבר יהודה", "hasGpx": false}, {"name": "שבילים לבנים סובב מודיעין", "region": "מרכז / שפלה", "hasGpx": false}, {"name": "נחל גרר — אזור הבתרונות", "region": "נגב מערבי", "hasGpx": false}, {"name": "סינגל חמרית (שביל ישראל)", "region": "מדבר יהודה", "hasGpx": false}];
+function safeFilename(name){
+  name=name.replace(/—/g,"-").replace(/–/g,"-").replace(/[\\/:*?"<>|]/g,"");
+  return name.replace(/\s+/g,"_").trim()+".gpx";
+}
+function saveToken(){
+  const t=document.getElementById("token").value.trim();
+  if(!t){setAuth("err","הדבק Token תקין");return;}
+  setAuth("info","בודק חיבור…");
+  fetch("https://api.github.com/repos/"+REPO,{headers:{Authorization:"Bearer "+t}})
+    .then(r=>{
+      if(r.ok){TOKEN=t;localStorage.setItem("rk_gh_token",t);setAuth("ok","מחובר ✓");showMain();}
+      else if(r.status===401)setAuth("err","Token לא תקין או חסר הרשאות");
+      else if(r.status===404)setAuth("err","לא נמצא repo או אין הרשאת גישה");
+      else setAuth("err","שגיאה: "+r.status);
+    }).catch(()=>setAuth("err","שגיאת רשת"));
+}
+function setAuth(c,m){const e=document.getElementById("authStatus");e.className="status "+c;e.textContent=m;}
+function logout(){TOKEN="";localStorage.removeItem("rk_gh_token");location.reload();}
+async function showMain(){
+  document.getElementById("authCard").classList.add("hide");
+  document.getElementById("mainCard").classList.remove("hide");
+  await syncStatus();
+  render();
+}
+async function syncStatus(){
+  try{
+    opInfo("טוען סטטוס עדכני מ-GitHub…");
+    const idx=await ghGet("index.html");
+    const html=decodeURIComponent(escape(atob(idx.content.replace(/\n/g,""))));
+    TRACKS.forEach(t=>{
+      const esc=t.name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      const re=new RegExp('\\{name:"'+esc+'"[\\s\\S]*?(?=\\{name:|\\];)');
+      const m=html.match(re);
+      t.hasGpx=m?/localgpx:|gpx:/.test(m[0]):false;
+    });
+    const have=TRACKS.filter(t=>t.hasGpx).length;
+    opOk("סטטוס עודכן מ-GitHub: "+have+" עם GPX, "+(TRACKS.length-have)+" חסרים.");
+  }catch(e){
+    opErr("לא הצלחתי לטעון סטטוס מ-GitHub (משתמש בנתונים מקומיים): "+e.message);
+  }
+}
+window.addEventListener("load",()=>{
+  const s=localStorage.getItem("rk_gh_token");
+  if(s){document.getElementById("token").value=s;TOKEN=s;
+    fetch("https://api.github.com/repos/"+REPO,{headers:{Authorization:"Bearer "+s}})
+      .then(r=>{if(r.ok){setAuth("ok","מחובר ✓");showMain();}});}
+});
+function render(){
+  const q=document.getElementById("q").value.trim(), f=document.getElementById("filter").value;
+  let html="",shown=0,have=0;
+  TRACKS.forEach((t,i)=>{
+    if(t.hasGpx)have++;
+    if(f==="miss"&&t.hasGpx)return; if(f==="has"&&!t.hasGpx)return;
+    if(q&&!(t.name+t.region).includes(q))return;
+    shown++;
+    html+='<div class="track '+(t.hasGpx?'has':'miss')+'" data-i="'+i+'">'+
+      '<div class="info"><div class="name">'+t.name+'</div><div class="meta">'+t.region+'</div></div>'+
+      '<span class="badge '+(t.hasGpx?'b-has':'b-miss')+'">'+(t.hasGpx?'✓ יש GPX':'✗ חסר')+'</span>'+
+      '<label class="drop">העלה קובץ<input type="file" accept=".gpx,.kml,.kmz" class="hide" onchange="pick(event,'+i+')"></label></div>';
+  });
+  document.getElementById("list").innerHTML=html||'<p class="stat">אין תוצאות.</p>';
+  document.getElementById("stat").innerHTML="מוצגים <b>"+shown+"</b> · יש GPX: <b>"+have+"</b>/"+TRACKS.length;
+  attachDrag();
+}
+document.getElementById("q").oninput=render;
+document.getElementById("filter").onchange=render;
+function attachDrag(){
+  document.querySelectorAll(".track").forEach(el=>{
+    el.ondragover=e=>{e.preventDefault();el.classList.add("dragover")};
+    el.ondragleave=()=>el.classList.remove("dragover");
+    el.ondrop=e=>{e.preventDefault();el.classList.remove("dragover");
+      if(e.dataTransfer.files.length)processFile(e.dataTransfer.files[0],+el.dataset.i);};
+  });
+}
+function pick(e,i){if(e.target.files.length)processFile(e.target.files[0],i);}
+function processFile(file,i){
+  const ext=file.name.toLowerCase().split(".").pop();
+  if(ext==="gpx")file.text().then(t=>upload(t,i));
+  else if(ext==="kml")file.text().then(t=>{const g=kmlToGpx(t,TRACKS[i].name);g?upload(g,i):opErr("המרת KML נכשלה");});
+  else if(ext==="kmz")file.arrayBuffer().then(b=>kmzToGpx(b,TRACKS[i].name).then(g=>{g?upload(g,i):opErr("חילוץ KMZ נכשל");}));
+  else opErr("פורמט לא נתמך (GPX/KML/KMZ)");
+}
+function kmlToGpx(kml,name){
+  let pts=[];
+  (kml.match(/<coordinates>([\s\S]*?)<\/coordinates>/gi)||[]).forEach(b=>
+    b.replace(/<\/?coordinates>/gi,"").trim().split(/\s+/).forEach(tr=>{
+      const p=tr.split(",");if(p.length>=2&&!isNaN(+p[0])&&!isNaN(+p[1]))pts.push([p[1],p[0]]);}));
+  if(pts.length<3)return null;
+  let o='<?xml version="1.0" encoding="UTF-8"?>\n<gpx version="1.1" creator="Rochvim Kavua" xmlns="http://www.topografix.com/GPX/1/1">\n';
+  o+="<metadata><name>"+name+"</name></metadata>\n<trk><name>"+name+"</name><trkseg>\n";
+  pts.forEach(p=>o+='<trkpt lat="'+p[0]+'" lon="'+p[1]+'"></trkpt>\n');
+  return o+"</trkseg></trk></gpx>";
+}
+async function kmzToGpx(buf,name){
+  try{const zip=await JSZip.loadAsync(buf);
+    for(const fn in zip.files)if(fn.toLowerCase().endsWith(".kml"))return kmlToGpx(await zip.files[fn].async("string"),name);
+  }catch(e){}
+  return null;
+}
+function b64(s){return btoa(unescape(encodeURIComponent(s)));}
+async function ghGet(path){
+  const r=await fetch("https://api.github.com/repos/"+REPO+"/contents/"+encodeURIComponent(path).replace(/%2F/g,"/")+"?ref="+BRANCH,{headers:{Authorization:"Bearer "+TOKEN}});
+  if(r.status===200)return r.json(); if(r.status===404)return null; throw new Error("GET "+r.status);
+}
+async function ghPut(path,contentB64,message,sha){
+  const body={message,content:contentB64,branch:BRANCH}; if(sha)body.sha=sha;
+  const r=await fetch("https://api.github.com/repos/"+REPO+"/contents/"+encodeURIComponent(path).replace(/%2F/g,"/"),{
+    method:"PUT",headers:{Authorization:"Bearer "+TOKEN,"Content-Type":"application/json"},body:JSON.stringify(body)});
+  if(!r.ok)throw new Error("PUT "+r.status+" "+(await r.text()).slice(0,120)); return r.json();
+}
+async function upload(gpxText,i){
+  const t=TRACKS[i], fname=safeFilename(t.name);
+  const el=document.querySelector('.track[data-i="'+i+'"]'); el&&el.classList.add("uploading");
+  opInfo('מעלה את "'+t.name+'"…');
+  try{
+    const gpxPath=GPX_DIR+"/"+fname;
+    const ex=await ghGet(gpxPath);
+    await ghPut(gpxPath,b64(gpxText),"GPX: "+t.name,ex&&ex.sha);
+    opInfo("מעדכן את index.html…");
+    const idx=await ghGet("index.html");
+    let html=decodeURIComponent(escape(atob(idx.content.replace(/\n/g,""))));
+    const localField='localgpx:"'+GPX_DIR+"/"+fname+'"';
+    if(html.indexOf(localField)<0){
+      const esc=t.name.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
+      const re=new RegExp('(\\{name:"'+esc+'"[\\s\\S]*?src:"[^"]+")((?:,\\s*gpx:"[^"]+")?)(\\})');
+      let done=false;
+      html=html.replace(re,(m,a,b,c)=>{if(m.indexOf("localgpx:")>=0)return m;done=true;return a+b+","+localField+c;});
+      if(!done){opErr('הקובץ עלה, אך לא נמצא "'+t.name+'" ב-index.html. הוסף ידנית: '+localField);el&&el.classList.remove("uploading");return;}
+      await ghPut("index.html",b64(html),"localgpx: "+t.name,idx.sha);
+    }
+    t.hasGpx=true;
+    opOk('✓ "'+t.name+'" עלה ועודכן באתר! (ייכנס לתוקף תוך כדקה)');
+    render();
+  }catch(e){opErr("שגיאה: "+e.message);el&&el.classList.remove("uploading");}
+}
+function opOk(m){const e=document.getElementById("opStatus");e.className="status ok";e.textContent=m;}
+function opErr(m){const e=document.getElementById("opStatus");e.className="status err";e.textContent=m;}
+function opInfo(m){const e=document.getElementById("opStatus");e.className="status info";e.textContent=m;}
+</script>
+</body>
+</html>
