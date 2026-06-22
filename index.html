@@ -397,6 +397,18 @@
     font-size:12.5px;font-weight:400;color:var(--ink-soft);letter-spacing:.2px}
   .copyright b{color:var(--ink);font-weight:700}
   @media(max-width:600px){.modal .stats b{font-size:18px}}
+  /* מסלולים דומים */
+  .sim-wrap{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+  .sim-title{font-size:16px;font-weight:800;margin-bottom:14px;color:var(--ink)}
+  .sim-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px}
+  .sim-card{border:1px solid var(--line);border-radius:14px;padding:13px 14px;cursor:pointer;
+    background:var(--surface);transition:transform .15s,border-color .15s,box-shadow .15s}
+  .sim-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow-lg)}
+  .sim-name{font-size:14px;font-weight:700;line-height:1.3;margin-bottom:6px;color:var(--ink)}
+  .sim-meta{font-size:12px;color:var(--ink-soft);margin-bottom:9px}
+  .sim-dist{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;
+    color:var(--accent);background:var(--glow-2);padding:3px 9px;border-radius:999px}
+  @media(max-width:600px){.sim-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -1371,6 +1383,49 @@ function clearAll(){
   render();
 }
 
+/* ---- מסלולים דומים באזור ---- */
+function haversineKm(a,b,c,d){
+  const R=6371,toRad=x=>x*Math.PI/180;
+  const dLat=toRad(c-a),dLon=toRad(d-b);
+  const s=Math.sin(dLat/2)**2+Math.cos(toRad(a))*Math.cos(toRad(c))*Math.sin(dLon/2)**2;
+  return R*2*Math.atan2(Math.sqrt(s),Math.sqrt(1-s));
+}
+function similarTrails(t,max){
+  const diffRank={"קל":1,"בינוני":2,"קשה":3,"אתגרי":4};
+  const scored=TRACKS.filter(o=>o!==t&&o.name!==t.name&&typeof o.lat==="number"&&typeof o.lon==="number")
+    .map(o=>{
+      const dist=haversineKm(t.lat,t.lon,o.lat,o.lon);
+      return {trk:o,dist};
+    })
+    .filter(x=>x.dist<=30)  // רדיוס מקסימלי 30 ק״מ
+    .map(x=>{
+      // ציון: מרחק (משקל עיקרי) + קנס על הפרש קושי + קנס קל על הפרש אורך
+      const diffGap=Math.abs((diffRank[x.trk.diff]||2)-(diffRank[t.diff]||2));
+      const kmGap=Math.abs((x.trk.km||0)-(t.km||0));
+      const score=x.dist + diffGap*4 + Math.min(kmGap,20)*0.3;
+      return {...x,score};
+    })
+    .sort((a,b)=>a.score-b.score)
+    .slice(0,4);
+  return scored;
+}
+function renderSimilar(t){
+  const list=similarTrails(t);
+  if(!list.length)return"";
+  const cards=list.map(({trk,dist})=>{
+    const idx=TRACKS.indexOf(trk);
+    return `<div class="sim-card" onclick="openModal(TRACKS[${idx}])">
+      <div class="sim-name">${trk.name}</div>
+      <div class="sim-meta">${trk.km} ק״מ · ${trk.diff}</div>
+      <div class="sim-dist">📍 ${dist<1?'פחות מק״מ':Math.round(dist)+' ק״מ'} מכאן</div>
+    </div>`;
+  }).join("");
+  return `<div class="sim-wrap">
+    <div class="sim-title">🚵 מסלולים דומים באזור</div>
+    <div class="sim-grid">${cards}</div>
+  </div>`;
+}
+
 /* ---- מודאל ---- */
 function openModal(t){
   const time=Math.round(t.km/12+t.el/400);
@@ -1418,6 +1473,7 @@ function openModal(t){
         <button class="btn btn-ghost" id="shareBtn">🔗 שיתוף המסלול</button>
         <button class="btn btn-ghost" id="favModalBtn">${isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים'}</button>
       </div>
+      ${renderSimilar(t)}
     </div>`;
   $("#shareBtn").onclick=()=>shareTrack(t);
   $("#favModalBtn").onclick=function(){toggleFav(t.name);this.textContent=isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים';};
