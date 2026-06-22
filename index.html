@@ -171,6 +171,7 @@
   @keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
   .ridges{position:fixed;left:0;right:0;bottom:0;z-index:-1;pointer-events:none;height:46vh;min-height:300px;overflow:hidden}
   .ridges svg{position:absolute;bottom:0;left:-5%;width:110%;height:100%}
+  .ridges svg path{fill:var(--ridge)}
   .ridge-a{animation:drift 14s ease-in-out infinite alternate}
   .ridge-b{animation:drift 10s ease-in-out infinite alternate-reverse}
   .ridge-c{animation:drift 18s ease-in-out infinite alternate}
@@ -401,9 +402,9 @@
 <body>
 
 <div class="ridges" aria-hidden="true">
-  <svg class="ridge-a" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,120 Q175,70 350,110 T700,95 V200 H0Z" fill="currentColor" opacity="0.55"/></svg>
-  <svg class="ridge-b" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,150 Q175,105 350,140 T700,130 V200 H0Z" fill="currentColor" opacity="0.78"/></svg>
-  <svg class="ridge-c" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,178 Q175,150 350,172 T700,166 V200 H0Z" fill="currentColor" opacity="0.95"/></svg>
+  <svg class="ridge-a" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,120 Q175,70 350,110 T700,95 V200 H0Z" opacity="0.55"/></svg>
+  <svg class="ridge-b" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,150 Q175,105 350,140 T700,130 V200 H0Z" opacity="0.78"/></svg>
+  <svg class="ridge-c" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,178 Q175,150 350,172 T700,166 V200 H0Z" opacity="0.95"/></svg>
 </div>
 
 <nav class="nav">
