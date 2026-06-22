@@ -67,6 +67,7 @@
     --green:#5dcaa5; --blue:#85b7eb; --red:#f09595; --black:#f5f5f7;
     --radius:20px;
     --glass-blur:blur(12px) saturate(140%);
+    --glow-1:rgba(15,110,86,.32); --glow-2:rgba(29,158,117,.20); --ridge:#0a3d2a;
   }
   /* ===== מצב בהיר (toggle) ===== */
   :root[data-theme="light"]{
@@ -79,6 +80,7 @@
     --glass-border:rgba(10,125,77,.20);
     --green:#0a7d4d; --blue:#0071e3; --red:#d63a3a; --black:#0d2c20;
     --glass-blur:blur(10px) saturate(130%);
+    --glow-1:rgba(10,125,77,.14); --glow-2:rgba(10,125,77,.10); --ridge:#bfe0d0;
   }
   /* ===== ערכת כחול-פלדה (כהה) ===== */
   :root[data-theme="blue"]{
@@ -92,6 +94,7 @@
     --green:#5b9bd5; --blue:#85b7eb; --red:#f09595; --black:#f0f2f5;
     --radius:20px;
     --glass-blur:blur(12px) saturate(120%);
+    --glow-1:rgba(58,127,181,.32); --glow-2:rgba(91,155,213,.20); --ridge:#13283a;
   }
   /* ===== ערכת כתום-אדמה (כהה) ===== */
   :root[data-theme="amber"]{
@@ -105,6 +108,7 @@
     --green:#e0973f; --blue:#e8c08a; --red:#f09595; --black:#f7f2ea;
     --radius:20px;
     --glass-blur:blur(12px) saturate(130%);
+    --glow-1:rgba(196,122,40,.32); --glow-2:rgba(224,151,63,.20); --ridge:#3a2814;
   }
   /* ===== ערכת סגול-לילה (כהה) ===== */
   :root[data-theme="purple"]{
@@ -118,6 +122,7 @@
     --green:#a17fd5; --blue:#c0a8e8; --red:#f09595; --black:#f3f0f7;
     --radius:20px;
     --glass-blur:blur(12px) saturate(130%);
+    --glow-1:rgba(127,91,181,.32); --glow-2:rgba(161,127,213,.20); --ridge:#241a33;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
@@ -156,12 +161,12 @@
   /* ===== רקע קולנועי גלובלי ===== */
   body::before{content:"";position:fixed;inset:0;z-index:-3;
     background:
-      radial-gradient(90% 60% at 78% 12%, rgba(15,110,86,.32), transparent 60%),
+      radial-gradient(90% 60% at 78% 12%, var(--glow-1), transparent 60%),
       radial-gradient(70% 50% at 20% 80%, rgba(133,183,235,.10), transparent 55%),
       var(--bg);}
   body::after{content:"";position:fixed;top:-10%;right:8%;width:42vw;height:42vw;max-width:520px;max-height:520px;
     z-index:-2;border-radius:50%;pointer-events:none;
-    background:radial-gradient(circle, rgba(29,158,117,.20), transparent 65%);
+    background:radial-gradient(circle, var(--glow-2), transparent 65%);
     animation:breathe 8s ease-in-out infinite}
   @keyframes breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:1;transform:scale(1.12)}}
   .ridges{position:fixed;left:0;right:0;bottom:0;z-index:-1;pointer-events:none;height:46vh;min-height:300px;overflow:hidden}
@@ -296,7 +301,7 @@
   .card.diff-black{border-inline-start-color:var(--ink)}
   .card:hover{transform:translateY(-8px) rotateX(4deg) rotateY(-4deg);box-shadow:var(--shadow-lg);border-color:var(--accent)}
   .card .top{height:118px;position:relative;display:flex;align-items:flex-end;padding:14px;
-    background:linear-gradient(135deg,rgba(29,158,117,.35),rgba(133,183,235,.22))}
+    background:linear-gradient(135deg,var(--glow-2),rgba(133,183,235,.22))}
   .card .top .region{font-size:12px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);
     padding:4px 11px;border-radius:999px;backdrop-filter:blur(4px)}
   .card .top .terrain-icon{position:absolute;top:50%;right:16px;transform:translateY(-50%);
@@ -327,7 +332,7 @@
     background:rgba(133,183,235,.12);color:var(--ink-soft);border:1px solid var(--line)}
   .tag-easy{background:rgba(93,202,165,.14);color:var(--accent)}
   .tag-fam{background:rgba(133,183,235,.14);color:var(--accent-2)}
-  .tag-shade{background:rgba(29,158,117,.14);color:var(--accent)}
+  .tag-shade{background:var(--glow-2);color:var(--accent)}
   .tag-view{background:rgba(240,159,39,.14);color:#ef9f27}
   .tag-tech{background:rgba(240,149,149,.14);color:#f09595}
   .tag-flow{background:rgba(133,183,235,.14);color:var(--accent-2)}
@@ -396,9 +401,9 @@
 <body>
 
 <div class="ridges" aria-hidden="true">
-  <svg class="ridge-a" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,120 Q175,70 350,110 T700,95 V200 H0Z" fill="#0a3d2a" opacity="0.85"/></svg>
-  <svg class="ridge-b" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,150 Q175,105 350,140 T700,130 V200 H0Z" fill="#0f5238" opacity="0.9"/></svg>
-  <svg class="ridge-c" viewBox="0 0 700 200" preserveAspectRatio="none"><path d="M0,178 Q175,150 350,172 T700,166 V200 H0Z" fill="#072018" opacity="0.95"/></svg>
+  <svg class="ridge-a" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,120 Q175,70 350,110 T700,95 V200 H0Z" fill="currentColor" opacity="0.55"/></svg>
+  <svg class="ridge-b" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,150 Q175,105 350,140 T700,130 V200 H0Z" fill="currentColor" opacity="0.78"/></svg>
+  <svg class="ridge-c" viewBox="0 0 700 200" preserveAspectRatio="none" style="color:var(--ridge)"><path d="M0,178 Q175,150 350,172 T700,166 V200 H0Z" fill="currentColor" opacity="0.95"/></svg>
 </div>
 
 <nav class="nav">
