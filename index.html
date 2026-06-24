@@ -2231,7 +2231,7 @@ function openModal(t){
     </div>`;
   $("#shareBtn").onclick=()=>shareTrack(t);
   $("#favModalBtn").onclick=function(){toggleFav(t.name);this.textContent=isFav(t.name)?'❤️ במועדפים':'🤍 הוספה למועדפים';};
-  history.replaceState(null,"","#"+encodeURIComponent(t.name));
+  history.pushState({modal:t.name},"","#"+encodeURIComponent(t.name));
   $("#overlay").classList.add("show");
   // פרופיל גובה מקובץ ה-GPX (אם קיים מקומית)
   loadElevation(t);
@@ -2302,7 +2302,7 @@ function drawTrackLine(t,mm,startMarker){
     }).catch(()=>{});
   }catch(e){}
 }
-function closeModal(){$("#overlay").classList.remove("show");if(location.hash)history.replaceState(null,"",location.pathname);}
+function closeModal(){if(history.state && history.state.modal){history.back();return;}$("#overlay").classList.remove("show");if(location.hash)history.replaceState(null,"",location.pathname);}
 
 /* ---- פרופיל גובה מקובץ GPX ---- */
 function loadElevation(t){
@@ -2547,7 +2547,7 @@ function openFromHash(){
   const t=findTrackByHash();
   if(t)setTimeout(()=>openModal(t),300);
 }
-window.addEventListener("hashchange",openFromHash);
+window.addEventListener("popstate",()=>{if(document.querySelector("#overlay").classList.contains("show")){document.querySelector("#overlay").classList.remove("show");}else{const t=findTrackByHash();if(t)openModal(t);}});
 openFromHash();
 
 /* ---- הזרקת Schema.org דינמי לכל המסלולים (SEO — תוצאות עשירות) ---- */
