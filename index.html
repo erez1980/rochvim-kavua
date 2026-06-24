@@ -143,6 +143,18 @@
     width:34px;height:34px;font-size:15px;cursor:pointer;display:grid;place-items:center;
     transition:.2s;flex:none}
   .theme-btn:hover{border-color:var(--accent);transform:scale(1.08)}
+  /* design toggle */
+  .design-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--surface);
+    border:1px solid var(--line);border-radius:999px;padding:4px 10px 4px 6px;
+    cursor:pointer;flex:none;text-decoration:none;transition:border-color .2s}
+  .design-toggle:hover{border-color:var(--accent)}
+  .toggle-track{width:32px;height:18px;border-radius:999px;background:rgba(93,202,165,.12);
+    position:relative;border:1px solid var(--line);transition:background .25s;flex:none}
+  .toggle-thumb{width:12px;height:12px;border-radius:50%;background:var(--accent);
+    position:absolute;top:2px;right:2px;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+  .toggle-label{font-size:12px;font-weight:700;color:var(--ink-soft);white-space:nowrap}
+  .design-toggle:hover .toggle-label{color:var(--ink)}
+  @media(max-width:480px){.toggle-label{display:none}}
   .theme-picker{position:relative;flex:none}
   .theme-menu{position:absolute;top:42px;inset-inline-end:0;background:var(--surface-solid);
     border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow-lg);padding:6px;
@@ -422,6 +434,10 @@
 <nav class="nav">
   <div class="logo">רוכבים קבוע</div>
   <b class="nav-tag">מאגר מסלולי השטח של ישראל</b>
+  <a href="index_new_design.html" class="design-toggle" title="עבור לעיצוב החדש" aria-label="עבור לעיצוב החדש">
+    <div class="toggle-track"><div class="toggle-thumb"></div></div>
+    <span class="toggle-label">עיצוב חדש</span>
+  </a>
   <div class="theme-picker">
     <button id="themeBtn" class="theme-btn" aria-label="בחירת ערכת צבע" title="ערכת צבע">🎨</button>
     <div id="themeMenu" class="theme-menu" role="menu" aria-label="ערכות צבע">

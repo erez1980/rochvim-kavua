@@ -321,6 +321,20 @@ footer p{font-size:13px; color:var(--soft); max-width:54ch; margin:0; line-heigh
 .swatch[data-set="violet"]{background:#a17fd5}
 @media(max-width:640px){ .mast-meta{display:none} .theme-pick{padding-inline-start:10px} }
 
+
+/* design toggle */
+.design-toggle{display:inline-flex;align-items:center;gap:8px;background:var(--surface);
+  border:1px solid var(--glass-border);border-radius:999px;padding:4px 10px 4px 6px;
+  cursor:pointer;flex:none;text-decoration:none;transition:border-color .2s}
+.design-toggle:hover{border-color:var(--clay)}
+.toggle-track{width:32px;height:18px;border-radius:999px;background:rgba(237,169,78,.2);
+  position:relative;border:1px solid var(--glass-border);flex:none}
+.toggle-thumb{width:12px;height:12px;border-radius:50%;background:var(--clay);
+  position:absolute;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.4)}
+.toggle-label{font-family:var(--mono);font-size:12px;font-weight:700;
+  color:var(--soft);white-space:nowrap}
+.design-toggle:hover .toggle-label{color:var(--ink)}
+@media(max-width:480px){.toggle-label{display:none}}
 </style>
 </head>
 <body>
@@ -332,6 +346,10 @@ footer p{font-size:13px; color:var(--soft); max-width:54ch; margin:0; line-heigh
     <div class="mast-logo">רוכבים קבוע<span class="d"></span></div>
     <div class="mast-meta">מאגר מסלולי השטח של ישראל</div>
     <span class="mast-sp"></span>
+  <a href="index.html" class="design-toggle" title="חזור לעיצוב הישן" aria-label="חזור לעיצוב הישן">
+      <div class="toggle-track"><div class="toggle-thumb"></div></div>
+      <span class="toggle-label">עיצוב חדש</span>
+    </a>
     <div class="theme-pick" id="themePick" role="group" aria-label="בחירת ערכת צבעים">
       <button class="swatch on" data-set="clay" title="חמרה" aria-label="חמרה"></button>
       <button class="swatch" data-set="forest" title="יער" aria-label="יער"></button>
