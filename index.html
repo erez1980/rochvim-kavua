@@ -44,7 +44,7 @@
 {"@context":"https://schema.org","@type":"CollectionPage","name":"מאגר סינגלים ומסלולי אופני שטח בישראל","description":"173 מסלולי סינגל ואופני שטח מכל רחבי ישראל, עם דרגות קושי, פרופיל גובה, מפה וקבצי GPX להורדה.","inLanguage":"he","about":[{"@type":"Thing","name":"סינגלים"},{"@type":"Thing","name":"אופני שטח"},{"@type":"Thing","name":"רכיבת eMTB"},{"@type":"Thing","name":"מסלולי GPX"}]}
 </script>
 <script type="application/ld+json">
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"איפה אפשר למצוא סינגלים בישראל עם קובץ GPX?","acceptedAnswer":{"@type":"Answer","text":"באתר רוכבים קבוע מרוכזים 173 סינגלים ומסלולי אופני שטח מכל רחבי ישראל, כאשר בעשרות מהם מצורף קובץ GPX להורדה ישירה לניווט."}},{"@type":"Question","name":"אילו סוגי מסלולים יש באתר רוכבים קבוע?","acceptedAnswer":{"@type":"Answer","text":"האתר כולל סינגלים, מסלולי קרוס-קאנטרי, אנדורו ומסלולי שטח, מסוננים לפי אזור, דרגת קושי, אורך, זמן רכיבה והתאמה לאופני חשמל."}},{"@type":"Question","name":"האם המסלולים מתאימים לאופני חשמל (eMTB)?","acceptedAnswer":{"@type":"Answer","text":"כן, חלק גדול מהמסלולים מסומנים כמתאימים לאופני חשמל, וניתן לסנן את המאגר כדי להציג רק אותם."}}]}
+{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"איפה אפשר למצוא סינגלים בישראל עם קובץ GPX?","acceptedAnswer":{"@type":"Answer","text":"באתר רוכבים קבוע מרוכזים 173 סינגלים ומסלולי אופני שטח מכל רחבי ישראל, כאשר בעשרות מהם מצורף קובץ GPX להורדה ישירה לניווט."}},{"@type":"Question","name":"אילו סוגי מסלולים יש באתר רוכבים קבוע?","acceptedAnswer":{"@type":"Answer","text":"האתר כולל סינגלים, מסלולי קרוס-קאנטרי, אנדורו ומסלולי שטח, מסוננים לפי אזור, דרגת קושי, אורך וזמן רכיבה."}},{"@type":"Question","name":"האם המסלולים מתאימים לאופני חשמל (eMTB)?","acceptedAnswer":{"@type":"Answer","text":"כן, רוב המסלולים במאגר מתאימים גם לאופני חשמל (eMTB), וחלקם מסומנים במיוחד ככאלה שהמנוע מסייע בהם בטיפוסים."}}]}
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -440,7 +440,6 @@
   <div class="stat">
     <div><b id="hcount">0</b><small>מסלולים</small></div>
     <div><b id="hkm">0</b><small>ק״מ מצטבר</small></div>
-    <div><b id="hebike">0</b><small>מתאימים לחשמלי</small></div>
   </div>
   <button id="heroNear" class="hero-near" onclick="findNearMe()">📍 מצא מסלולים לידי</button>
 </header>
@@ -485,7 +484,6 @@
         <span class="chip" data-diff="בינוני"><span class="dot" style="background:var(--blue)"></span>בינוני</span>
         <span class="chip" data-diff="קשה"><span class="dot" style="background:var(--red)"></span>קשה</span>
         <span class="chip" data-diff="אתגרי"><span class="dot" style="background:var(--ink)"></span>אתגרי</span>
-        <span class="chip" id="ebikeChip">⚡ מתאים לחשמלי</span>
         <span class="chip" id="gpxChip">📥 יש GPX להורדה</span>
       </div>
       <div class="row" style="margin-top:10px">
@@ -2022,7 +2020,6 @@ function hasGPX(t){return !!t.localgpx || !!t.gpx || /\/bike\/trips\/[^/]+\/?$/.
 /* כותרת — סטטיסטיקה */
 $("#hcount").textContent=TRACKS.length;
 $("#hkm").textContent=Math.round(TRACKS.reduce((s,t)=>s+t.km,0));
-$("#hebike").textContent=TRACKS.filter(t=>t.ebike).length;
 
 /* סינון */
 function filtered(){
@@ -2033,7 +2030,6 @@ function filtered(){
     if(state.cat){const c=t.cat||"regular";if(c!==state.cat)return false;}
     if(state.dir&&t.dir!==state.dir)return false;
     if(state.diffs.size&&!state.diffs.has(t.diff))return false;
-    if(state.ebike&&!t.ebike)return false;
     if(state.gpxOnly&&!hasGPX(t))return false;
     if(state.timeCat&&timeCategory(t)!==state.timeCat)return false;
     if(state.summer&&!summerFriendly(t))return false;
@@ -2059,12 +2055,12 @@ function filtered(){
 
 /* האם יש סינון פעיל כלשהו */
 function anyActive(){
-  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.ebike||state.sort||state.km<120||state.el<1500||state.favOnly||state.gpxOnly||state.timeCat||state.summer||state.water||state.attraction;
+  return state.q||state.region||state.type||state.cat||state.dir||state.diffs.size||state.sort||state.km<120||state.el<1500||state.favOnly||state.gpxOnly||state.timeCat||state.summer||state.water||state.attraction;
 }
 function activeCount(){
   let n=0;
   if(state.region)n++; if(state.type)n++; if(state.cat)n++; if(state.dir)n++; if(state.sort)n++;
-  n+=state.diffs.size; if(state.ebike)n++; if(state.favOnly)n++; if(state.gpxOnly)n++;
+  n+=state.diffs.size; if(state.favOnly)n++; if(state.gpxOnly)n++;
   if(state.timeCat)n++; if(state.summer)n++; if(state.water)n++; if(state.attraction)n++;
   if(state.km<120)n++; if(state.el<1500)n++;
   return n;
@@ -2155,7 +2151,7 @@ function revealCards(){
 /* ניקוי כל הסינונים */
 function clearAll(){
   state.q="";state.region="";state.type="";state.cat="";state.dir="";state.diffs.clear();
-  state.ebike=false;state.km=120;state.el=1500;state.sort="";state.favOnly=false;state.gpxOnly=false;
+  state.km=120;state.el=1500;state.sort="";state.favOnly=false;state.gpxOnly=false;
   state.timeCat="";state.summer=false;state.water=false;state.attraction=false;
   $("#q").value="";$("#region").value="";$("#type").value="";$("#cat").value="";$("#dir").value="";$("#sort").value="";
   {const tc=$("#timeCat"); if(tc)tc.value="";}
@@ -2461,10 +2457,6 @@ $$(".chip[data-diff]").forEach(c=>{
   c.onclick=toggle;
   c.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();toggle()}};
 });
-const ebc=$("#ebikeChip");ebc.setAttribute("role","button");ebc.setAttribute("tabindex","0");
-const ebToggle=function(){state.ebike=!state.ebike;ebc.classList.toggle("on",state.ebike);render()};
-ebc.onclick=ebToggle;
-ebc.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();ebToggle()}};
 const gpxc=$("#gpxChip");gpxc.setAttribute("role","button");gpxc.setAttribute("tabindex","0");
 const gpxToggle=function(){state.gpxOnly=!state.gpxOnly;gpxc.classList.toggle("on",state.gpxOnly);render()};
 gpxc.onclick=gpxToggle;
